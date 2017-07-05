@@ -1,0 +1,5 @@
+TODO before publish: 
+  1) Document and clean the code
+  2) Search for the unknown values
+  3) Create a Value interface and reduce code
+  4) Add control for File and Chunk headers

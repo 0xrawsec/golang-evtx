@@ -1,0 +1,5 @@
+https://github.com/libyal/libevtx/blob/master/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc#binary_xml
+
+https://msdn.microsoft.com/en-us/library/cc231334.aspx
+
+Simple BinXML: https://msdn.microsoft.com/en-us/library/cc231354.aspx
