@@ -1,4 +1,3 @@
-evtx/...
 package main
 
 import (
@@ -7,4 +6,4 @@ import (
 	_ "github.com/0xrawsec/golang-utils/log"
 )
 
-func main(){}
+func main() {}
