@@ -189,10 +189,15 @@ func (ef *File) Chunks() (cc chan Chunk) {
 
 // MonitorChunks returns a chan of all the Chunks found in the file under monitoring
 // @stop: a channel used to stop the monitoring if needed
+// @sleep...: optionnal sleep time
 // return (chan Chunk)
-func (ef *File) MonitorChunks(stop chan bool) (cc chan Chunk) {
+func (ef *File) MonitorChunks(stop chan bool, sleep ...time.Duration) (cc chan Chunk) {
 	cc = make(chan Chunk, 4)
-	sleepTime := 250 * time.Millisecond
+	sleepTime := DefaultMonitorSleep
+	// Set up a sleep time
+	if len(sleep) > 0 {
+		sleepTime = sleep[0]
+	}
 	markedChunks := datastructs.NewSyncedSet()
 
 	// Main routine to feed the Chunk Channel

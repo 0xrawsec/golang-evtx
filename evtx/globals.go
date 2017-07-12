@@ -3,14 +3,8 @@ package evtx
 import (
 	"encoding/binary"
 	"errors"
+	"time"
 )
-
-/////////////////////////// Init function for EVTX parsing /////////////////////
-// TODO : can be done in another way creating a UTCTime struct
-/*func init() {
-	// The times are UTC in EVTX files
-	time.Local = time.UTC
-}*/
 
 /////////////////////////////////// Errors /////////////////////////////////////
 
@@ -25,13 +19,27 @@ var (
 	ErrTokenEOF     = errors.New("TokenEOF")
 )
 
-////////////////////////////// Parser Global(s) ////////////////////////////////
-
+//////////////////////// Global Variables and their setters /////////////////////
 var (
+	// ModeCarving flag to identify we run in carving mode
 	ModeCarving = false
+	// DefaultMonitorSleep default sleep time between two file update checks when
+	// monitoring file
+	DefaultMonitorSleep = 250 * time.Millisecond
 )
 
-//////////////////////////////// EVTX Constants ////////////////////////////////
+// SetModeCarving changes the carving mode to value
+func SetModeCarving(value bool) {
+	ModeCarving = value
+}
+
+// SetMonitorSleep sets the sleep time between two file update checks when
+// monitoring file
+func SetMonitorSleep(d time.Duration) {
+	DefaultMonitorSleep = d
+}
+
+////////////////////////// EVTX Constants and globs ////////////////////////////
 
 const (
 	EventHeaderSize = 24

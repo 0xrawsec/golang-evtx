@@ -31,11 +31,6 @@ func checkFullParsingError(err error, reader io.ReadSeeker, e Element, c *Chunk)
 	}
 }
 
-// SetModeCarving changes the carving mode to value
-func SetModeCarving(value bool) {
-	ModeCarving = value
-}
-
 ///////////////////////////// ErrUnknownToken //////////////////////////////////
 
 type ErrUnknownToken struct {
