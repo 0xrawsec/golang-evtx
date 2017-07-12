@@ -178,7 +178,7 @@ func TestMonitorChunks(t *testing.T) {
 		time.Sleep(time.Second * 10)
 		stop <- true
 	}()
-	for c := range ef.MonitorChunks(stop) {
+	for c := range ef.MonitorChunks(stop, evtx.DefaultMonitorSleep) {
 		t.Log(c.String())
 	}
 }

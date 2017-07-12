@@ -189,15 +189,11 @@ func (ef *File) Chunks() (cc chan Chunk) {
 
 // MonitorChunks returns a chan of all the Chunks found in the file under monitoring
 // @stop: a channel used to stop the monitoring if needed
-// @sleep...: optionnal sleep time
+// @sleep: sleep time
 // return (chan Chunk)
-func (ef *File) MonitorChunks(stop chan bool, sleep ...time.Duration) (cc chan Chunk) {
+func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chunk) {
 	cc = make(chan Chunk, 4)
-	sleepTime := DefaultMonitorSleep
-	// Set up a sleep time
-	if len(sleep) > 0 {
-		sleepTime = sleep[0]
-	}
+	sleepTime := sleep
 	markedChunks := datastructs.NewSyncedSet()
 
 	// Main routine to feed the Chunk Channel
@@ -309,11 +305,15 @@ func (ef *File) FastEvents() (cgem chan *GoEvtxMap) {
 // under monitoring. This is the fast version
 // @stop: a channel used to stop the monitoring if needed
 // return (chan *GoEvtxMap)
-func (ef *File) MonitorEvents(stop chan bool) (cgem chan *GoEvtxMap) {
+func (ef *File) MonitorEvents(stop chan bool, sleep ...time.Duration) (cgem chan *GoEvtxMap) {
 	// Normally, it should not be needed to add a second check here on the
 	// EventRecordID since the record ids in the chunks are not supposed to overlap
 	// TODO: Add a EventRecordID marker if needed
-	jobs := int(math.Floor(float64(runtime.NumCPU()) / 2))
+	sleepTime := DefaultMonitorSleep
+	if len(sleep) > 0 {
+		sleepTime = sleep[0]
+	}
+	jobs := MaxJobs
 	cgem = make(chan *GoEvtxMap, 42)
 	go func() {
 		defer close(cgem)
@@ -321,7 +321,7 @@ func (ef *File) MonitorEvents(stop chan bool) (cgem chan *GoEvtxMap) {
 		go func() {
 			defer close(chanQueue)
 			// this chan ends only when value is put into stop
-			for pc := range ef.MonitorChunks(stop) {
+			for pc := range ef.MonitorChunks(stop, sleepTime) {
 				// We have to create a copy here because otherwise cpc.EventsChan() fails
 				// I guess that because EventsChan takes a pointer to an object
 				// and thus the chan is taken on the pointer and since the object pointed

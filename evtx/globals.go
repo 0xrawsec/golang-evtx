@@ -3,6 +3,8 @@ package evtx
 import (
 	"encoding/binary"
 	"errors"
+	"math"
+	"runtime"
 	"time"
 )
 
@@ -26,6 +28,8 @@ var (
 	// DefaultMonitorSleep default sleep time between two file update checks when
 	// monitoring file
 	DefaultMonitorSleep = 250 * time.Millisecond
+	// MaxJobs controls the maximum jobs for some functions (MonitorEvents ...)
+	MaxJobs = int(math.Floor(float64(runtime.NumCPU()) / 2))
 )
 
 // SetModeCarving changes the carving mode to value
@@ -37,6 +41,10 @@ func SetModeCarving(value bool) {
 // monitoring file
 func SetMonitorSleep(d time.Duration) {
 	DefaultMonitorSleep = d
+}
+
+func SetMaxJobs(jobs int) {
+	MaxJobs = jobs
 }
 
 ////////////////////////// EVTX Constants and globs ////////////////////////////
