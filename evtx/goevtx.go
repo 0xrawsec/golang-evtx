@@ -332,18 +332,18 @@ func (pg *GoEvtxMap) IsEventID(eids ...interface{}) bool {
 // return error if any
 func (pg *GoEvtxMap) Set(path *GoEvtxPath, new GoEvtxElement) error {
 	if len(*path) > 0 {
-		if ge, ok := (*pg)[(*path)[0]]; ok {
-			if len(*path) == 1 {
-				(*pg)[(*path)[0]] = new
-				return nil
-			}
-			switch ge.(type) {
-			case GoEvtxMap:
-				p := ge.(GoEvtxMap)
-				np := (*path)[1:]
-				return p.Set(&np, new)
-			}
+		ge := (*pg)[(*path)[0]]
+		if len(*path) == 1 {
+			(*pg)[(*path)[0]] = new
+			return nil
 		}
+		switch ge.(type) {
+		case GoEvtxMap:
+			p := ge.(GoEvtxMap)
+			np := (*path)[1:]
+			return p.Set(&np, new)
+		}
+
 	}
 	return &ErrEvtxEltNotFound{*path}
 }
