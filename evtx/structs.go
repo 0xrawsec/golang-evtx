@@ -8,6 +8,9 @@ import (
 	"github.com/0xrawsec/golang-utils/log"
 )
 
+// EventIDType is an alias to the type of EventID
+type EventIDType int64
+
 //////////////////////////////// Interfaces Definition //////////////////////////
 
 type Element interface {
