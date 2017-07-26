@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/0xrawsec/golang-utils/datastructs"
@@ -59,8 +60,9 @@ type FileHeader struct {
 
 // File structure definition
 type File struct {
-	Header FileHeader
-	file   *os.File
+	sync.Mutex // We need it if we want to parse (read) chunks in several threads
+	Header     FileHeader
+	file       *os.File
 }
 
 // New EvtxFile structure initialized from file
@@ -79,6 +81,8 @@ func New(filepath string) (ef File, err error) {
 // ParseFileHeader parses a the file header of the file structure and modifies
 // the Header of the current structure
 func (ef *File) ParseFileHeader() {
+	ef.Lock()
+	defer ef.Unlock()
 	GoToSeeker(ef.file, 0)
 	err := encoding.Unmarshal(ef.file, &ef.Header, Endianness)
 	if err != nil {
@@ -117,6 +121,8 @@ func (fh FileHeader) String() string {
 // @offset : offset in the current file where to find the Chunk
 // return Chunk : Chunk (raw) parsed
 func (ef *File) FetchRawChunk(offset int64) (Chunk, error) {
+	ef.Lock()
+	defer ef.Unlock()
 	c := NewChunk()
 	GoToSeeker(ef.file, offset)
 	c.Offset = offset
@@ -133,6 +139,8 @@ func (ef *File) FetchRawChunk(offset int64) (Chunk, error) {
 // @offset : offset in the current file where to find the Chunk
 // return Chunk : Chunk parsed
 func (ef *File) FetchChunk(offset int64) (Chunk, error) {
+	ef.Lock()
+	defer ef.Unlock()
 	c := NewChunk()
 	GoToSeeker(ef.file, offset)
 	c.Offset = offset
@@ -176,13 +184,7 @@ func (ef *File) Chunks() (cc chan Chunk) {
 		// We sort out the chunks
 		sort.Stable(cs)
 		for _, rc := range cs {
-			chunk, err := ef.FetchChunk(rc.Offset)
-			switch {
-			case err != nil && err != io.EOF:
-				panic(err)
-			case err == nil:
-				cc <- chunk
-			}
+			cc <- rc
 		}
 	}()
 	return
@@ -196,7 +198,8 @@ func (ef *File) UnorderedChunks() (cc chan Chunk) {
 		defer close(cc)
 		for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
 			offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
-			chunk, err := ef.FetchChunk(offsetChunk)
+			//chunk, err := ef.FetchChunk(offsetChunk)
+			chunk, err := ef.FetchRawChunk(offsetChunk)
 			switch {
 			case err != nil && err != io.EOF:
 				panic(err)
@@ -307,9 +310,14 @@ func (ef *File) FastEvents() (cgem chan *GoEvtxMap) {
 				// I guess that because EventsChan takes a pointer to an object and that
 				// and thus the chan is taken on the pointer and since the object pointed
 				// changes -> kaboom
-				cpc := pc
-				ev := cpc.Events()
-				chanQueue <- ev
+				cpc, err := ef.FetchChunk(pc.Offset)
+				switch {
+				case err != nil && err != io.EOF:
+					panic(err)
+				case err == nil:
+					ev := cpc.Events()
+					chanQueue <- ev
+				}
 			}
 		}()
 		for ec := range chanQueue {
@@ -338,9 +346,14 @@ func (ef *File) UnorderedEvents() (cgem chan *GoEvtxMap) {
 				// I guess that because EventsChan takes a pointer to an object and that
 				// and thus the chan is taken on the pointer and since the object pointed
 				// changes -> kaboom
-				cpc := pc
-				ev := cpc.Events()
-				chanQueue <- ev
+				cpc, err := ef.FetchChunk(pc.Offset)
+				switch {
+				case err != nil && err != io.EOF:
+					panic(err)
+				case err == nil:
+					ev := cpc.Events()
+					chanQueue <- ev
+				}
 			}
 		}()
 		for ec := range chanQueue {
