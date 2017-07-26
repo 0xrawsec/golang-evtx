@@ -150,7 +150,7 @@ func Parse(reader io.ReadSeeker, c *Chunk, tiFlag bool) (Element, error) {
 		checkParsingError(err, reader, &vt)
 		return &vt, err
 
-	case TokenEntityRef2:
+	case TokenEntityRef1, TokenEntityRef2:
 		e := BinXMLEntityReference{}
 		err = e.Parse(reader)
 		checkParsingError(err, reader, &e)

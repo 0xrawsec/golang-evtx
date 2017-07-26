@@ -15,6 +15,10 @@ type GoEvtxMap map[string]GoEvtxElement
 
 type GoEvtxPath []string
 
+func (p GoEvtxPath) String() string {
+	return strings.Join(p, "/")
+}
+
 type ErrEvtxEltNotFound struct {
 	path GoEvtxPath
 }
@@ -137,7 +141,10 @@ func (pg *GoEvtxMap) GetString(path *GoEvtxPath) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return (*pE).(string), nil
+	if s, ok := (*pE).(string); ok {
+		return s, nil
+	}
+	return "", fmt.Errorf("Bad type expect string got %T", (*pE))
 }
 
 func (pg *GoEvtxMap) GetStringStrict(path *GoEvtxPath) string {
@@ -251,7 +258,15 @@ func (pg *GoEvtxMap) GetTimeStrict(path *GoEvtxPath) time.Time {
 // EventID returns the EventID of the Event as a int64
 // return int64 : EventID
 func (pg *GoEvtxMap) EventID() int64 {
-	return pg.GetIntStrict(&EventIDPath)
+	eid, err := pg.GetInt(&EventIDPath)
+	if err != nil {
+		eid, err = pg.GetInt(&EventIDPath2)
+		if err != nil {
+			panic(err)
+		}
+		return eid
+	}
+	return eid
 }
 
 func (pg *GoEvtxMap) EventRecordID() int64 {

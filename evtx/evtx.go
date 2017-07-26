@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math"
 	"os"
-	"runtime"
 	"sort"
 	"time"
 
 	"github.com/0xrawsec/golang-utils/datastructs"
 	"github.com/0xrawsec/golang-utils/encoding"
+	"github.com/0xrawsec/golang-utils/log"
 )
 
 // ChunkCache structure as a Set
@@ -157,6 +156,8 @@ func (ef *File) FetchChunk(offset int64) (Chunk, error) {
 
 // Chunks returns a chan of all the Chunks found in the current file
 // return (chan Chunk)
+// TODO: need to be improved: the chunk do not need to be loaded into memory there
+// we just need the header to sort them out. If we do so, do not need undordered chunks
 func (ef *File) Chunks() (cc chan Chunk) {
 	cc = make(chan Chunk)
 	go func() {
@@ -176,6 +177,26 @@ func (ef *File) Chunks() (cc chan Chunk) {
 		sort.Stable(cs)
 		for _, rc := range cs {
 			chunk, err := ef.FetchChunk(rc.Offset)
+			switch {
+			case err != nil && err != io.EOF:
+				panic(err)
+			case err == nil:
+				cc <- chunk
+			}
+		}
+	}()
+	return
+}
+
+// UnorderedChunks returns a chan of all the Chunks found in the current file
+// return (chan Chunk)
+func (ef *File) UnorderedChunks() (cc chan Chunk) {
+	cc = make(chan Chunk)
+	go func() {
+		defer close(cc)
+		for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
+			offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
+			chunk, err := ef.FetchChunk(offsetChunk)
 			switch {
 			case err != nil && err != io.EOF:
 				panic(err)
@@ -275,14 +296,44 @@ func (ef *File) Events() (cgem chan *GoEvtxMap) {
 // file. Same as Events method but the fast version
 // return (chan *GoEvtxMap)
 func (ef *File) FastEvents() (cgem chan *GoEvtxMap) {
-	jobs := int(math.Floor(float64(runtime.NumCPU()) / 2))
 	cgem = make(chan *GoEvtxMap, 42)
 	go func() {
 		defer close(cgem)
-		chanQueue := make(chan (chan *GoEvtxMap), jobs)
+		chanQueue := make(chan (chan *GoEvtxMap), MaxJobs)
 		go func() {
 			defer close(chanQueue)
 			for pc := range ef.Chunks() {
+				// We have to create a copy here because otherwise cpc.EventsChan() fails
+				// I guess that because EventsChan takes a pointer to an object and that
+				// and thus the chan is taken on the pointer and since the object pointed
+				// changes -> kaboom
+				cpc := pc
+				ev := cpc.Events()
+				chanQueue <- ev
+			}
+		}()
+		for ec := range chanQueue {
+			for event := range ec {
+				log.Debug(event)
+				cgem <- event
+			}
+		}
+	}()
+	return
+}
+
+// UnorderedEvents returns a chan pointers to all the GoEvtxMap found in the current
+// file. Same as FastEvents method but the order by time is not guaranteed. It can
+// significantly improve preformances for big files.
+// return (chan *GoEvtxMap)
+func (ef *File) UnorderedEvents() (cgem chan *GoEvtxMap) {
+	cgem = make(chan *GoEvtxMap, 42)
+	go func() {
+		defer close(cgem)
+		chanQueue := make(chan (chan *GoEvtxMap), MaxJobs)
+		go func() {
+			defer close(chanQueue)
+			for pc := range ef.UnorderedChunks() {
 				// We have to create a copy here because otherwise cpc.EventsChan() fails
 				// I guess that because EventsChan takes a pointer to an object and that
 				// and thus the chan is taken on the pointer and since the object pointed
