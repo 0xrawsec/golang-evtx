@@ -11,7 +11,7 @@ import (
 
 type GoEvtxElement interface{}
 
-type GoEvtxMap map[string]GoEvtxElement
+type GoEvtxMap map[string]interface{}
 
 type GoEvtxPath []string
 
@@ -110,13 +110,18 @@ func (pg *GoEvtxMap) GetMapWhereStrict(path *GoEvtxPath, value interface{}) *GoE
 // return *GoEvtxElement, error : pointer to the element found at path
 func (pg *GoEvtxMap) Get(path *GoEvtxPath) (*GoEvtxElement, error) {
 	if len(*path) > 0 {
-		if ge, ok := (*pg)[(*path)[0]]; ok {
+		if i, ok := (*pg)[(*path)[0]]; ok {
 			if len(*path) == 1 {
-				return &ge, nil
+				cge := GoEvtxElement(i)
+				return &cge, nil
 			}
-			switch ge.(type) {
+			switch i.(type) {
 			case GoEvtxMap:
-				p := ge.(GoEvtxMap)
+				p := i.(GoEvtxMap)
+				np := (*path)[1:]
+				return p.Get(&np)
+			case map[string]interface{}:
+				p := GoEvtxMap(i.(map[string]interface{}))
 				np := (*path)[1:]
 				return p.Get(&np)
 			}
