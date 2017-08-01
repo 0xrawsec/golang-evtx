@@ -204,11 +204,10 @@ func TestRightOrderSlowEvents(t *testing.T) {
 
 func TestRightOrderFastEvents(t *testing.T) {
 	ef, _ := evtx.New(sysmonFile)
-	prevErid := uint64(0)
+	prevErid := int64(0)
 	i := 0
-	sPath := evtx.Path("/Event/System/EventRecordID/Value")
 	for e := range ef.FastEvents() {
-		erid := e.GetUintStrict(&sPath)
+		erid := e.EventRecordID()
 		if erid < prevErid {
 			t.Fatalf("Order is not guaranteed")
 		}

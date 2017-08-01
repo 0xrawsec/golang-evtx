@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/0xrawsec/golang-utils/datastructs"
 	"github.com/0xrawsec/golang-utils/encoding"
 	"github.com/0xrawsec/golang-utils/log"
 )
@@ -112,6 +113,12 @@ func (c *Chunk) ParseChunkHeader(reader io.ReadSeeker) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// Less implement datastructs.Sortable
+func (c Chunk) Less(s *datastructs.Sortable) bool {
+	other := (*s).(Chunk)
+	return c.Header.NumFirstRecLog < other.Header.NumFirstRecLog
 }
 
 // ParseStringTable parses the string table located at the current offset in the

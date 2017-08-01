@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"sync"
 	"time"
 
@@ -167,24 +166,23 @@ func (ef *File) FetchChunk(offset int64) (Chunk, error) {
 // TODO: need to be improved: the chunk do not need to be loaded into memory there
 // we just need the header to sort them out. If we do so, do not need undordered chunks
 func (ef *File) Chunks() (cc chan Chunk) {
+	ss := datastructs.NewSortedSlice(0, int(ef.Header.ChunkCount))
 	cc = make(chan Chunk)
 	go func() {
 		defer close(cc)
-		cs := make(ChunkSorter, 0, ef.Header.ChunkCount)
-		for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
+		for i := uint16(0); i < ef.Header.ChunkCount; i++ {
 			offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
 			chunk, err := ef.FetchRawChunk(offsetChunk)
 			switch {
 			case err != nil && err != io.EOF:
 				panic(err)
 			case err == nil:
-				cs = append(cs, chunk)
+				ss.Insert(chunk)
 			}
 		}
-		// We sort out the chunks
-		sort.Stable(cs)
-		for _, rc := range cs {
-			cc <- rc
+		// sorted slice has to be iterated backward
+		for rc := range ss.ReversedIter() {
+			cc <- rc.(Chunk)
 		}
 	}()
 	return
@@ -196,7 +194,7 @@ func (ef *File) UnorderedChunks() (cc chan Chunk) {
 	cc = make(chan Chunk)
 	go func() {
 		defer close(cc)
-		for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
+		for i := uint16(0); i < ef.Header.ChunkCount; i++ {
 			offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
 			//chunk, err := ef.FetchChunk(offsetChunk)
 			chunk, err := ef.FetchRawChunk(offsetChunk)
@@ -236,7 +234,8 @@ func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 				// go through
 			}
 			curChunks := datastructs.NewSyncedSet()
-			cs := make(ChunkSorter, 0, ef.Header.ChunkCount)
+			//cs := make(ChunkSorter, 0, ef.Header.ChunkCount)
+			ss := datastructs.NewSortedSlice(0, int(ef.Header.ChunkCount))
 			for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
 				offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
 				chunk, err := ef.FetchRawChunk(offsetChunk)
@@ -252,7 +251,8 @@ func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 					markedChunks.Add(chunk.Header.FirstEventRecID)
 					markedChunks.Add(chunk.Header.LastEventRecID)
 					if !firstLoopFlag {
-						cs = append(cs, chunk)
+						//cs = append(cs, chunk)
+						ss.Insert(chunk)
 					}
 				}
 			}
@@ -263,9 +263,10 @@ func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 			// We flag out of first loop
 			firstLoopFlag = false
 			// We sort out the chunks
-			sort.Stable(cs)
-			for _, rc := range cs {
-				chunk, err := ef.FetchChunk(rc.Offset)
+			//sort.Stable(cs)
+			//for _, rc := range cs {
+			for rc := range ss.ReversedIter() {
+				chunk, err := ef.FetchChunk(rc.(Chunk).Offset)
 				switch {
 				case err != nil && err != io.EOF:
 					panic(err)

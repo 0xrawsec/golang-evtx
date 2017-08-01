@@ -53,6 +53,7 @@ var (
 	carve         bool
 	timestamp     bool
 	version       bool
+	unordered     bool
 	offset        int64
 	limit         int
 	start, stop   args.DateVar
@@ -184,6 +185,7 @@ func main() {
 	flag.BoolVar(&carve, "c", carve, "Carve events from file")
 	flag.BoolVar(&version, "V", version, "Show version and exit")
 	flag.BoolVar(&timestamp, "t", timestamp, "Prints event timestamp (as int) at the beginning of line to make sorting easier")
+	flag.BoolVar(&unordered, "u", unordered, "Does not care about ordering the events before printing (faster for large files)")
 	flag.Int64Var(&offset, "o", offset, "Offset to start from (carving mode only)")
 	flag.IntVar(&limit, "l", limit, "Limit the number of chunks to parse (carving mode only)")
 	flag.Var(&start, "start", "Print logs starting from start")
