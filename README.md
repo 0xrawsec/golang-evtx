@@ -51,11 +51,6 @@ An example is better than a long talk:
 }
  ```
 
-# Documentation
-
-I would qualify the library documentation as rather bad. We are going to fix this
-in a near future.
-
 # Command Line Tools
 
 Some utilities are packaged with this library and can be used without any
@@ -69,9 +64,9 @@ the file.
 
 Evtxdump can also be used to carve Events from raw data. It can be very convenient
 to recover corrupted EVTX or to carve deleted EVTX files from disk images. We advise
-you to select the option made to print the timestamp `-t` at the beginning of each line
-in order to sort events (with `sort` command for Linux users) latter on for
-timelining purposes.
+you to select the option `-t` made to print the timestamp as integer at the
+beginning of each line of the output. This can be used later on to sort the events
+for timelining purposes (with `sort` command for instance).
 
 ```
 Usage of evtxdump: evtxdump [OPTIONS] FILES...
