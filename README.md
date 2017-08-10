@@ -86,6 +86,7 @@ Usage of evtxdump: evtxdump [OPTIONS] FILES...
   -stop value
     	Print logs before stop
   -t	Prints event timestamp (as int) at the beginning of line to make sorting easier
+  -u	Does not care about ordering the events before printing (faster for large files)
 ```
 
 ## evtxmon
