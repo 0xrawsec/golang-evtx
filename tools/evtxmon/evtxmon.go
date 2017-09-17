@@ -49,14 +49,15 @@ conditions;`
 )
 
 var (
-	evtxfile  string
-	version   bool
-	statsFlag bool
-	debug     bool
-	filters   args.ListIntVar
-	duration  DurationArg
-	output    string
-	utctime   = evtx.Path("/Event/EventData/UtcTime")
+	evtxfile        string
+	version         bool
+	statsFlag       bool
+	debug           bool
+	monitorExisting bool
+	filters         args.ListIntVar
+	duration        DurationArg
+	output          string
+	utctime         = evtx.Path("/Event/EventData/UtcTime")
 )
 
 type DurationArg time.Duration
@@ -170,9 +171,10 @@ func main() {
 	flag.Var(&filters, "f", "Event ids to filter out")
 	flag.Var(&duration, "t", "Timeout for the test")
 	flag.BoolVar(&version, "V", version, "Show version information")
-	flag.StringVar(&output, "w", output, "Write monitored events to output file.")
+	flag.StringVar(&output, "w", output, "Write monitored events to output file")
 	flag.BoolVar(&statsFlag, "s", statsFlag, "Outputs stats about events processed")
 	flag.BoolVar(&debug, "d", debug, "Enable debug messages")
+	flag.BoolVar(&monitorExisting, "e", monitorExisting, "Return also already existing events")
 
 	flag.Parse()
 
@@ -238,6 +240,9 @@ func main() {
 		}
 
 		stats.InitStart()
+		if monitorExisting {
+			ef.SetMonitorExisting(true)
+		}
 		for e := range ef.MonitorEvents(stop) {
 			if output != "" {
 				ofile.Write(evtx.ToJSON(e))

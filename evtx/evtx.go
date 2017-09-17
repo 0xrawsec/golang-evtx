@@ -59,9 +59,10 @@ type FileHeader struct {
 
 // File structure definition
 type File struct {
-	sync.Mutex // We need it if we want to parse (read) chunks in several threads
-	Header     FileHeader
-	file       *os.File
+	sync.Mutex      // We need it if we want to parse (read) chunks in several threads
+	Header          FileHeader
+	file            *os.File
+	monitorExisting bool
 }
 
 // New EvtxFile structure initialized from file
@@ -75,6 +76,17 @@ func New(filepath string) (ef File, err error) {
 	ef.file = file
 	ef.ParseFileHeader()
 	return
+}
+
+// Open alias to New to be complient with the Go way of programming
+func Open(filepath string) (ef File, err error) {
+	return New(filepath)
+}
+
+// SetMonitorExisting sets monitorExisting flag of EvtxFile struct in order to
+// return already existing events when using MonitorEvents
+func (ef *File) SetMonitorExisting(value bool) {
+	ef.monitorExisting = value
 }
 
 // ParseFileHeader parses a the file header of the file structure and modifies
@@ -209,11 +221,12 @@ func (ef *File) UnorderedChunks() (cc chan Chunk) {
 	return
 }
 
-// MonitorChunks returns a chan of all the Chunks found in the file under monitoring
+// monitorChunks returns a chan of the new Chunks found in the file under
+// monitoring created after the monitoring started
 // @stop: a channel used to stop the monitoring if needed
 // @sleep: sleep time
 // return (chan Chunk)
-func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chunk) {
+func (ef *File) monitorChunks(stop chan bool, sleep time.Duration) (cc chan Chunk) {
 	cc = make(chan Chunk, 4)
 	sleepTime := sleep
 	markedChunks := datastructs.NewSyncedSet()
@@ -221,7 +234,7 @@ func (ef *File) MonitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 	// Main routine to feed the Chunk Channel
 	go func() {
 		defer close(cc)
-		firstLoopFlag := true
+		firstLoopFlag := !ef.monitorExisting
 		for {
 			// Parse the file header again to get the updates in the file
 			ef.ParseFileHeader()
@@ -386,7 +399,7 @@ func (ef *File) MonitorEvents(stop chan bool, sleep ...time.Duration) (cgem chan
 		go func() {
 			defer close(chanQueue)
 			// this chan ends only when value is put into stop
-			for pc := range ef.MonitorChunks(stop, sleepTime) {
+			for pc := range ef.monitorChunks(stop, sleepTime) {
 				// We have to create a copy here because otherwise cpc.EventsChan() fails
 				// I guess that because EventsChan takes a pointer to an object
 				// and thus the chan is taken on the pointer and since the object pointed
