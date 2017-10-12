@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"sync"
 	"time"
@@ -249,7 +250,7 @@ func (ef *File) monitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 			curChunks := datastructs.NewSyncedSet()
 			//cs := make(ChunkSorter, 0, ef.Header.ChunkCount)
 			ss := datastructs.NewSortedSlice(0, int(ef.Header.ChunkCount))
-			for i := uint16(0); i <= ef.Header.ChunkCount; i++ {
+			for i := uint16(0); i < ef.Header.ChunkCount; i++ {
 				offsetChunk := int64(ef.Header.ChunkDataOffset) + int64(ChunkSize)*int64(i)
 				chunk, err := ef.FetchRawChunk(offsetChunk)
 				curChunks.Add(chunk.Header.FirstEventRecID, chunk.Header.LastEventRecID)
@@ -287,6 +288,13 @@ func (ef *File) monitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 					cc <- chunk
 				}
 			}
+
+			// Check if we should quit
+			if ef.Header.ChunkCount >= math.MaxUint16 {
+				log.Info("Monitoring stopped: maximum chunk number reached")
+				break
+			}
+
 			// Sleep between loops
 			time.Sleep(sleepTime)
 		}

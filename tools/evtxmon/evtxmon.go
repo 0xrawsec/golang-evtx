@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
+	"compress/gzip"
 	"evtx"
 	"flag"
 	"fmt"
@@ -39,11 +40,11 @@ import (
 const (
 	// ExitSuccess RC
 	ExitSuccess = 0
-	// ExitFail RC
-	ExitFail  = 1
-	Version   = "Evtxmon 1.0"
-	Copyright = "Evtxmon Copyright (C) 2017 RawSec SARL (@0xrawsec)"
-	License   = `License GPLv3: This program comes with ABSOLUTELY NO WARRANTY.
+	// ExitFailure RC
+	ExitFailure = 1
+	Version     = "Evtxmon 1.0"
+	Copyright   = "Evtxmon Copyright (C) 2017 RawSec SARL (@0xrawsec)"
+	License     = `License GPLv3: This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain
 conditions;`
 )
@@ -162,6 +163,7 @@ func (s *Stats) Summary() {
 func main() {
 	var err error
 	var ofile *os.File
+	var writer *gzip.Writer
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] EVTX-FILE\n", filepath.Base(os.Args[0]))
@@ -183,6 +185,23 @@ func main() {
 		log.InitLogger(log.LDebug)
 	}
 
+	stats := NewStats(filters...)
+
+	// Signal handler to catch interrupt
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	go func() {
+		<-c
+		// No error handling
+		writer.Flush()
+		writer.Close()
+		ofile.Close()
+		if statsFlag {
+			stats.Summary()
+		}
+		os.Exit(ExitFailure)
+	}()
+
 	// version
 	if version {
 		fmt.Fprintf(os.Stderr, "%s\n%s\n%s\n", Version, Copyright, License)
@@ -195,6 +214,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		writer = gzip.NewWriter(ofile)
+
+		defer writer.Flush()
+		defer writer.Close()
 		defer ofile.Close()
 	}
 
@@ -202,7 +225,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	} else {
-		stats := NewStats(filters...)
 		stop := make(chan bool, 1)
 		ef, err := evtx.New(evtxfile)
 		if err != nil {
@@ -216,14 +238,6 @@ func main() {
 					stats.DisplayStats()
 				}
 			}()
-
-			go func() {
-				c := make(chan os.Signal)
-				signal.Notify(c, os.Interrupt)
-				<-c
-				stats.Summary()
-				os.Exit(1)
-			}()
 		}
 
 		if duration > 0 {
@@ -234,7 +248,7 @@ func main() {
 				}
 				if statsFlag {
 					stats.Summary()
-					os.Exit(1)
+					os.Exit(ExitFailure)
 				}
 			}()
 		}
@@ -245,8 +259,9 @@ func main() {
 		}
 		for e := range ef.MonitorEvents(stop) {
 			if output != "" {
-				ofile.Write(evtx.ToJSON(e))
-				ofile.WriteString("\n")
+				writer.Write(evtx.ToJSON(e))
+				writer.Write([]byte("\n"))
+				writer.Flush()
 			}
 			if statsFlag {
 				stats.Update(e)
