@@ -42,7 +42,7 @@ const (
 	ExitSuccess = 0
 	// ExitFail RC
 	ExitFail  = 1
-	Version   = "Evtxdump 1.0"
+	Version   = "Evtxdump 1.1"
 	Copyright = "Evtxdump Copyright (C) 2017 RawSec SARL (@0xrawsec)"
 	License   = `License GPLv3: This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain
