@@ -136,6 +136,7 @@ var (
 	// Paths used by GoEvtxMap
 	PathSeparator     = "/"
 	XmlnsPath         = Path("/Event/xmlns")
+	ChannelPath       = Path("/Event/System/Channel")
 	EventIDPath       = Path("/Event/System/EventID")
 	EventIDPath2      = Path("/Event/System/EventID/Value")
 	EventRecordIDPath = Path("/Event/System/EventRecordID")

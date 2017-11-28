@@ -30,6 +30,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/pprof"
+	"sync"
 	"time"
 
 	"github.com/0xrawsec/golang-utils/args"
@@ -54,12 +55,54 @@ var (
 	timestamp     bool
 	version       bool
 	unordered     bool
+	statflag      bool
 	offset        int64
 	limit         int
 	start, stop   args.DateVar
 	chunkHeaderRE = regexp.MustCompile(evtx.ChunkMagic)
 	defaultTime   = time.Time{}
 )
+
+//////////////////////////// stat structure ////////////////////////////////////
+
+type eventIDStat map[int64]uint
+
+type stats struct {
+	sync.RWMutex
+	EventCount   uint
+	ChannelStats map[string]eventIDStat
+}
+
+// stats contstructor
+func newStats() stats {
+	s := stats{}
+	s.ChannelStats = make(map[string]eventIDStat)
+	return s
+}
+
+// update stats in a stat sturcture
+func (s *stats) update(channel string, eventID int64) {
+	s.Lock()
+	if _, ok := s.ChannelStats[channel]; !ok {
+		s.ChannelStats[channel] = make(eventIDStat)
+	}
+	s.ChannelStats[channel][eventID]++
+	s.EventCount++
+	s.Unlock()
+}
+
+// prints in CSV format
+func (s *stats) print() {
+	fmt.Printf("Channel,EventID,Count\n")
+	for c := range s.ChannelStats {
+		for eid, cnt := range s.ChannelStats[c] {
+			fmt.Printf("%s,%d,%d\n", c, eid, cnt)
+		}
+	}
+	//fmt.Printf("Total Events: %d\n", s.EventCount)
+}
+
+/////////////////////////////// Carving functions //////////////////////////////
 
 // Find the potential chunks
 func findChunksOffsets(r io.ReadSeeker) (co chan int64) {
@@ -179,6 +222,8 @@ func printEvent(e *evtx.GoEvtxMap) {
 	}
 }
 
+///////////////////////////////// Main /////////////////////////////////////////
+
 func main() {
 	var memprofile, cpuprofile string
 	flag.BoolVar(&debug, "d", debug, "Enable debug mode")
@@ -186,6 +231,7 @@ func main() {
 	flag.BoolVar(&version, "V", version, "Show version and exit")
 	flag.BoolVar(&timestamp, "t", timestamp, "Prints event timestamp (as int) at the beginning of line to make sorting easier")
 	flag.BoolVar(&unordered, "u", unordered, "Does not care about ordering the events before printing (faster for large files)")
+	flag.BoolVar(&statflag, "s", statflag, "Prints stats about events in files")
 	flag.Int64Var(&offset, "o", offset, "Offset to start from (carving mode only)")
 	flag.IntVar(&limit, "l", limit, "Limit the number of chunks to parse (carving mode only)")
 	flag.Var(&start, "start", "Print logs starting from start")
@@ -239,7 +285,15 @@ func main() {
 		}()
 	}
 
+	// init stats in case needed
+	s := newStats()
+
 	for _, evtxFile := range flag.Args() {
+		switch {
+		case carve:
+		default:
+
+		}
 		if !carve {
 			// Regular EVTX file
 			ef, err := evtx.New(evtxFile)
@@ -248,12 +302,23 @@ func main() {
 				continue
 			}
 			for e := range ef.FastEvents() {
-				printEvent(e)
+				if statflag {
+					// We update the stats
+					s.update(e.Channel(), e.EventID())
+				} else {
+					// We print events
+					printEvent(e)
+				}
 			}
 		} else {
 			evtx.SetModeCarving(true)
 			// We have to carve the file
 			carveFile(evtxFile, offset, limit)
 		}
+	}
+
+	// We print the stats if needed
+	if statflag {
+		s.print()
 	}
 }

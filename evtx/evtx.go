@@ -303,6 +303,7 @@ func (ef *File) monitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 }
 
 // Events returns a chan pointers to all the GoEvtxMap found in the current file
+// this is a slow implementation, FastEvents should be prefered
 // return (chan *GoEvtxMap)
 func (ef *File) Events() (cgem chan *GoEvtxMap) {
 	cgem = make(chan *GoEvtxMap, 1)

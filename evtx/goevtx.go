@@ -274,6 +274,12 @@ func (pg *GoEvtxMap) EventID() int64 {
 	return eid
 }
 
+// Channel returns the Channel attribute of the event
+// return string : Channel attribute
+func (pg *GoEvtxMap) Channel() string {
+	return pg.GetStringStrict(&ChannelPath)
+}
+
 func (pg *GoEvtxMap) EventRecordID() int64 {
 	return pg.GetIntStrict(&EventRecordIDPath)
 }
