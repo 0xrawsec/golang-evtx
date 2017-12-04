@@ -20,6 +20,9 @@ init:
 
 compile:linux windows darwin
 
+install:
+	go install $(MAIN_BASEN_SRC).go
+
 linux:
 	GOARCH=386 GOOS=linux go build $(OPTS) -o $(RELEASE)/linux/$(MAIN_BASEN_SRC)-386 $(MAIN_BASEN_SRC).go
 	GOARCH=amd64 GOOS=linux go build $(OPTS) -o $(RELEASE)/linux/$(MAIN_BASEN_SRC)-amd64 $(MAIN_BASEN_SRC).go

@@ -19,6 +19,9 @@ init:
 	mkdir -p $(RELEASE)/darwin
 
 compile:linux windows darwin
+	
+install:
+	go install $(MAIN_BASEN_SRC).go
 
 linux:
 	GOARCH=386 GOOS=linux go build $(OPTS) -o $(RELEASE)/linux/$(MAIN_BASEN_SRC)-386 $(MAIN_BASEN_SRC).go

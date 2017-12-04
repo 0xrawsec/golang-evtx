@@ -2,6 +2,10 @@ all:
 	cd evtxdump; $(MAKE) all
 	cd evtxmon; $(MAKE) all
 
+install:
+	cd evtxdump; $(MAKE) install
+	cd evtxmon; $(MAKE) install
+
 linux:
 	cd evtxdump; $(MAKE) linux
 	cd evtxmon; $(MAKE) linux

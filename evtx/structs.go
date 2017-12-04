@@ -545,10 +545,27 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 		m := make(GoEvtxMap, len(n.Child))
 		for i, c := range n.Child {
 			node := ti.NodeToGoEvtx(c)
-			// If we have only keys like "Name" "Value" top level is useless
-			if node.HasKeys("Name", "Value") && len(node) == 2 {
+			switch {
+			// It seems that on EVTX files forwarded to WECs we have sometime just a
+			// Name attribute without value. We notice that this happened to Element
+			// that can be NULL. Maybe it is a default assumption or it is due to an
+			// upstream parsing bug unidentified yet. Anyway the easiest way is to
+			// fix it here
+			// Example:     "EventData": {
+			//"Data": {
+			//  "Name": "SourcePortName"
+			//},
+			//"Data16": {
+			//  "Name": "DestinationPortName"
+			//},
+			// We only have one element Name
+			case node.HasKeys("Name") && len(node) == 1:
+				m[node["Name"].(string)] = ""
+			// Case where the Node only has two elements Name and Value
+			case node.HasKeys("Name", "Value") && len(node) == 2:
 				m[node["Name"].(string)] = node["Value"]
-			} else {
+			// All the other cases
+			default:
 				name := c.Start.Name.String()
 				if _, ok := m[name]; ok {
 					name = fmt.Sprintf("%s%d", name, i)
@@ -563,6 +580,10 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 					m[name] = node
 				}
 			}
+			// If we have only keys like "Name" "Value" top level is useless
+			/*if node.HasKeys("Name", "Value") && len(node) == 2 {
+			} else {
+			}*/
 		}
 
 		// It is assumed that all the Elements have a string representation
