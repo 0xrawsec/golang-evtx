@@ -426,3 +426,8 @@ func (ef *File) MonitorEvents(stop chan bool, sleep ...time.Duration) (cgem chan
 	}()
 	return
 }
+
+// Close file
+func (ef *File) Close() error {
+	return ef.file.Close()
+}
