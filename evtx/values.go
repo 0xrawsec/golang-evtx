@@ -615,6 +615,10 @@ type ValueBinary struct {
 }
 
 func (b *ValueBinary) Parse(reader io.ReadSeeker) error {
+	// Fix of issue: https://github.com/0xrawsec/golang-evtx/issues/3
+	if b.Size < 0 {
+		return fmt.Errorf("%T has invalid size", *b)
+	}
 	b.value = make([]byte, b.Size)
 	if b.Size > 0 {
 		return encoding.UnmarshaInitSlice(reader, &b.value, Endianness)
