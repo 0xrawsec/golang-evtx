@@ -280,12 +280,26 @@ func (pg *GoEvtxMap) Channel() string {
 	return pg.GetStringStrict(&ChannelPath)
 }
 
+// EventRecordID returns the EventRecordID of the the event. It panics if the
+// attribute is not found in the event.
 func (pg *GoEvtxMap) EventRecordID() int64 {
 	return pg.GetIntStrict(&EventRecordIDPath)
 }
 
+// TimeCreated returns the creation time of the event. It panics if the attribute
+// is not in the event
 func (pg *GoEvtxMap) TimeCreated() time.Time {
 	return pg.GetTimeStrict(&SystemTimePath)
+}
+
+// UserID retrieves the UserID attribute located at /Event/System/Security/UserID
+// if present. If not present the ok flag will be false
+func (pg *GoEvtxMap) UserID() (userID string, ok bool) {
+	userID, err := pg.GetString(&UserIDPath)
+	if err == nil {
+		ok = true
+	}
+	return
 }
 
 func (pg *GoEvtxMap) Before(t time.Time) bool {

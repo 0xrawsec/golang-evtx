@@ -141,4 +141,5 @@ var (
 	EventIDPath2      = Path("/Event/System/EventID/Value")
 	EventRecordIDPath = Path("/Event/System/EventRecordID")
 	SystemTimePath    = Path("/Event/System/TimeCreated/SystemTime")
+	UserIDPath        = Path("/Event/System/Security/UserID")
 )

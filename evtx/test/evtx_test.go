@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	log.InitLogger(log.LDebug)
+	//log.InitLogger(log.LDebug)
 }
 
 func TestParseAt(t *testing.T) {
@@ -171,7 +171,7 @@ func TestParseChunk(t *testing.T) {
 	}
 }
 
-func TestMonitorChunks(t *testing.T) {
+/*func TestMonitorChunks(t *testing.T) {
 	ef, _ := evtx.New(sysmonFile)
 	stop := make(chan bool, 1)
 	go func() {
@@ -181,7 +181,7 @@ func TestMonitorChunks(t *testing.T) {
 	for c := range ef.MonitorChunks(stop, evtx.DefaultMonitorSleep) {
 		t.Log(c.String())
 	}
-}
+}*/
 
 func TestRightOrderSlowEvents(t *testing.T) {
 	ef, _ := evtx.New(sysmonFile)
@@ -308,4 +308,24 @@ func TestAllFiles(t *testing.T) {
 		for _ = range ef.FastEvents() {
 		}
 	}
+}
+
+func TestUserID(t *testing.T) {
+	files, err := ioutil.ReadDir(testfilesDir)
+	if err != nil {
+		panic(err)
+	}
+	for _, fi := range files {
+		fullpath := filepath.Join(testfilesDir, fi.Name())
+		ef, _ := evtx.New(fullpath)
+		for e := range ef.FastEvents() {
+			if uid, ok := e.UserID(); ok {
+				if uid == "" {
+					t.Log(string(evtx.ToJSON(e)))
+				}
+				t.Log(uid)
+			}
+		}
+	}
+
 }
