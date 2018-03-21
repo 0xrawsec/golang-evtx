@@ -61,7 +61,7 @@ func (u *UnkVal) Value() interface{} {
 ////////////////////////////////// NullType ////////////////////////////////////
 
 type ValueNull struct {
-	Size int16
+	Size uint16
 }
 
 func (n *ValueNull) Parse(reader io.ReadSeeker) error {
@@ -340,15 +340,11 @@ func (v *ValueReal64) Repr() interface{} {
 ///////////////////////////////// UTF16String //////////////////////////////////
 
 type ValueString struct {
-	Size  int16
+	Size  uint16
 	value UTF16String
 }
 
 func (s *ValueString) Parse(reader io.ReadSeeker) error {
-	//len := ReadSeekerSize(reader)
-	/*if len%2 != 0 {
-		return fmt.Errorf("Bad string size")
-	}*/
 	if s.Size > 0 {
 		s.value = make(UTF16String, s.Size/2)
 		return encoding.UnmarshaInitSlice(reader, &s.value, Endianness)
@@ -357,7 +353,7 @@ func (s *ValueString) Parse(reader io.ReadSeeker) error {
 }
 
 func (s *ValueString) String() string {
-	return string(s.value.ToASCII())
+	return s.value.ToString()
 }
 
 func (s *ValueString) Value() interface{} {
@@ -371,12 +367,13 @@ func (s *ValueString) Repr() interface{} {
 ///////////////////////////// UTF16StringArray /////////////////////////////////
 
 type ValueStringTable struct {
-	Size  int16
+	Size  uint16
 	value []UTF16String
 }
 
 func (st *ValueStringTable) Parse(reader io.ReadSeeker) error {
-	cp := UTF16{}
+	//cp := UTF16{}
+	cp := uint16(0)
 	st.value = make([]UTF16String, 0)
 	s := make(UTF16String, 0)
 	for i := 0; i < int(st.Size/2); i++ {
@@ -404,7 +401,7 @@ func (st *ValueStringTable) Bytes() []byte {
 			continue
 		}
 		w.Write([]byte(`"`))
-		w.Write([]byte(elt.ToASCII()))
+		w.Write([]byte(elt.ToString()))
 		w.Write([]byte(`"`))
 		// Last element is always empty
 		if i != len(st.value)-2 {
@@ -429,7 +426,7 @@ func (st *ValueStringTable) Repr() interface{} {
 		if elt.Len() == 0 {
 			continue
 		}
-		out = append(out, string(elt.ToASCII()))
+		out = append(out, elt.ToString())
 	}
 	return out
 }
@@ -437,7 +434,7 @@ func (st *ValueStringTable) Repr() interface{} {
 ///////////////////////////// ValueArrayInt16 /////////////////////////////////
 
 type ValueArrayUInt16 struct {
-	Size  int16
+	Size  uint16
 	value []uint16
 }
 
@@ -467,7 +464,7 @@ func (a *ValueArrayUInt16) Repr() interface{} {
 ///////////////////////////// ValueArrayUInt64 /////////////////////////////////
 
 type ValueArrayUInt64 struct {
-	Size  int16
+	Size  uint16
 	value []uint64
 }
 
@@ -497,7 +494,7 @@ func (a *ValueArrayUInt64) Repr() interface{} {
 ////////////////////////////////// ANSIString //////////////////////////////////
 
 type AnsiString struct {
-	Size  int16
+	Size  uint16
 	value []byte
 }
 
@@ -610,7 +607,7 @@ func (b *ValueBool) Repr() interface{} {
 ///////////////////////////////// ValueBinary //////////////////////////////////
 
 type ValueBinary struct {
-	Size  int16
+	Size  uint16
 	value []byte
 }
 

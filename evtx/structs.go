@@ -360,14 +360,14 @@ func (n *Name) Parse(reader io.ReadSeeker) error {
 	}
 
 	// No need to control size since it is uint16
-	n.UTF16String = make([]UTF16, n.Size+1)
+	n.UTF16String = make([]uint16, n.Size+1)
 
 	err = encoding.UnmarshaInitSlice(reader, &n.UTF16String, Endianness)
 	return err
 }
 
 func (n *Name) String() string {
-	return string(n.UTF16String.ToASCII())
+	return n.UTF16String.ToString()
 }
 
 ///////////////////////////// BinXmlEntityReference ////////////////////////////
@@ -391,7 +391,7 @@ type ValueText struct {
 }
 
 func (vt *ValueText) String() string {
-	return string(vt.Value.String.ToASCII())
+	return vt.Value.String.ToString()
 }
 
 func (vt *ValueText) IsAttributeData() bool {
@@ -805,7 +805,7 @@ func (tid *TemplateInstanceData) Parse(reader io.ReadSeeker) error {
 ///////////////////////// BinXMLValue Related Structures ///////////////////////
 
 type ValueDescriptor struct {
-	Size    int16
+	Size    uint16
 	ValType ValueType
 	Unknown int8 // 0x00
 }

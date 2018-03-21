@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/0xrawsec/golang-utils/log"
 )
@@ -103,38 +105,21 @@ func RelGoToSeeker(seeker io.Seeker, offset int64) {
 }
 
 //////////////////////////////// UTF16String ///////////////////////////////////
-type UTF16 [2]byte
+// NB: We keep those structure for compatibility with parts of the code
+type UTF16 uint16
 
-type UTF16String []UTF16
+type UTF16String []uint16
 
 var (
-	UTF16EndOfString = UTF16{0, 0}
+	UTF16EndOfString = uint16(0x0)
 )
 
 func (us *UTF16String) Len() int32 {
 	return int32(len(*us)) * 2
 }
 
-func (us UTF16String) Bytes() (b []byte) {
-	b = make([]byte, len(us)*2)
-	for i, uc := range us {
-		b[i], b[i+1] = uc[0], uc[1]
-	}
-	return
-}
-
-func (us UTF16String) ToASCII() (as []byte) {
-	// Not display trailing end of string
-	as = make([]byte, len(us))
-	for i, uc := range us {
-		if i == len(us)-1 && us[len(us)-1] == UTF16EndOfString {
-			// We shorten the output by 1 code point and continue
-			as = as[:len(us)-1]
-			continue
-		}
-		as[i] = uc[0]
-	}
-	return
+func (us UTF16String) ToString() string {
+	return strings.TrimRight(string(utf16.Decode([]uint16(us))), "\u0000")
 }
 
 /////////////////////////////////// UTCTime ///////////////////////////////////
