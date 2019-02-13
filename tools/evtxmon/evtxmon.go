@@ -22,7 +22,6 @@ package main
 
 import (
 	"compress/gzip"
-	"evtx"
 	"flag"
 	"fmt"
 	"os"
@@ -32,6 +31,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xrawsec/golang-evtx/evtx"
 	"github.com/0xrawsec/golang-utils/args"
 	"github.com/0xrawsec/golang-utils/datastructs"
 	"github.com/0xrawsec/golang-utils/log"

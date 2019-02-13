@@ -22,7 +22,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"evtx"
 	"flag"
 	"fmt"
 	"io"
@@ -33,6 +32,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xrawsec/golang-evtx/evtx"
 	"github.com/0xrawsec/golang-utils/args"
 	"github.com/0xrawsec/golang-utils/log"
 )

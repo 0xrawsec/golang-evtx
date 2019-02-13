@@ -89,6 +89,14 @@ Usage of evtxdump: evtxdump [OPTIONS] FILES...
   -u	Does not care about ordering the events before printing (faster for large files)
 ```
 
+### docker version evtxdump
+
+```
+docker build -t MonaxGT/evtxdump .
+docker run -it --rm -v /tmp:/app/data evtxdump /app/data/log.evtx
+
+```
+
 ## evtxmon
 
 Evtxmon is a small command line tool used to monitor in realtime the logs as they
