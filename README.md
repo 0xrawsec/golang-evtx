@@ -86,6 +86,14 @@ Usage of evtxdump: evtxdump [OPTIONS] FILES...
   -stop value
     	Print logs before stop
   -t	Prints event timestamp (as int) at the beginning of line to make sorting easier
+  -tag string
+        special tag for matching purpose on remote collector
+  -tcp string
+        tcp socket address for sending output to remote site over TCP. Only for type tcp
+  -http string
+        url for sending output to remote site over HTTP. Only for type http
+  -type string
+        Type of remote log collector. "http" - JSON-over-HTTP, "tcp" - JSON-over-TCP
   -u	Does not care about ordering the events before printing (faster for large files)
 ```
 

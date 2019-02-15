@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/0xrawsec/golang-evtx/evtx"
+	"github.com/0xrawsec/golang-evtx/output"
 	"github.com/0xrawsec/golang-utils/args"
 	"github.com/0xrawsec/golang-utils/log"
 )
@@ -58,6 +59,10 @@ var (
 	statflag      bool
 	offset        int64
 	limit         int
+	tag           string
+	outTcp        string
+	outHttp       string
+	outType       string
 	start, stop   args.DateVar
 	chunkHeaderRE = regexp.MustCompile(evtx.ChunkMagic)
 	defaultTime   = time.Time{}
@@ -240,6 +245,11 @@ func main() {
 	flag.StringVar(&memprofile, "memprofile", "", "write memory profile to this file")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to this file")
 
+	flag.StringVar(&outType, "type", "", "Type of remote log collector. JSON-over-HTTP, JSON-over-TCP")
+	flag.StringVar(&outHttp, "http", "", "url for sending output to remote site over HTTP")
+	flag.StringVar(&outTcp, "tcp", "", "tcp socket address for sending output to remote site over TCP")
+	flag.StringVar(&tag, "tag", "", "special tag for matching purpose on remote collector")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s: %[1]s [OPTIONS] FILES...\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
@@ -288,6 +298,28 @@ func main() {
 	// init stats in case needed
 	s := newStats()
 
+	// init tcp sender if exists
+	var out output.Output
+	switch outType {
+	case "http":
+		httpOut := &output.HttpJSON{
+			Url: outHttp,
+			Tag: tag,
+		}
+		if err := httpOut.Open(outHttp); err != nil {
+			log.Errorf("Can't init http conn", err)
+		}
+		out = httpOut
+	case "tcp":
+		tcpOut := &output.TcpJSON{
+			Tag: tag,
+		}
+		if err := tcpOut.Open(outTcp); err != nil {
+			log.Errorf("Can't init tcp conn", err)
+		}
+		out = tcpOut
+	}
+
 	for _, evtxFile := range flag.Args() {
 		switch {
 		case carve:
@@ -307,7 +339,11 @@ func main() {
 					s.update(e.Channel(), e.EventID())
 				} else {
 					// We print events
-					printEvent(e)
+					if outType != "" {
+						out.Request(e)
+					} else {
+						printEvent(e)
+					}
 				}
 			}
 		} else {
