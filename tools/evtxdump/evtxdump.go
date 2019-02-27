@@ -63,6 +63,9 @@ var (
 	outTcp        string
 	outHttp       string
 	outType       string
+	brURL         string
+	cID           string
+	topic         string
 	start, stop   args.DateVar
 	chunkHeaderRE = regexp.MustCompile(evtx.ChunkMagic)
 	defaultTime   = time.Time{}
@@ -245,9 +248,12 @@ func main() {
 	flag.StringVar(&memprofile, "memprofile", "", "write memory profile to this file")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to this file")
 
-	flag.StringVar(&outType, "type", "", "Type of remote log collector. JSON-over-HTTP, JSON-over-TCP")
+	flag.StringVar(&outType, "type", "", "Type of remote log collector. JSON-over-HTTP, JSON-over-TCP, Kafka")
 	flag.StringVar(&outHttp, "http", "", "url for sending output to remote site over HTTP")
 	flag.StringVar(&outTcp, "tcp", "", "tcp socket address for sending output to remote site over TCP")
+	flag.StringVar(&brURL, "brURL", "", "Kafka Broker URL")
+	flag.StringVar(&topic, "topic", "", "Kafka topic")
+	flag.StringVar(&cID, "cID", "", "Kafka client ID")
 	flag.StringVar(&tag, "tag", "", "special tag for matching purpose on remote collector")
 
 	flag.Usage = func() {
@@ -318,6 +324,17 @@ func main() {
 			log.Errorf("Can't init tcp conn", err)
 		}
 		out = tcpOut
+	case "kafka":
+		kafkaOut := &output.Kafka{
+			BrokerURLs: brURL,
+			Topic:      topic,
+			ClientID:   cID,
+			Tag:        tag,
+		}
+		if err := kafkaOut.Open(outHttp); err != nil {
+			log.Errorf("Can't init Kafka conn", err)
+		}
+		out = kafkaOut
 	}
 
 	for _, evtxFile := range flag.Args() {
