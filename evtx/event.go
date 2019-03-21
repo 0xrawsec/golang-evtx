@@ -67,7 +67,7 @@ func (e Event) GoEvtxMap(c *Chunk) (pge *GoEvtxMap, err error) {
 		//panic(err)
 		log.Error(err)
 	}
-	// If not a BinXMLFrgament a panic will be raised
+	// If not a BinXMLFragment a panic will be raised
 	fragment, ok := element.(*Fragment)
 	switch {
 	case !ok && ModeCarving:

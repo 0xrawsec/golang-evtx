@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"evtx"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/0xrawsec/golang-utils/log"
+	"github.com/0xrawsec/golang-evtx/evtx"
 )
 
 var (
