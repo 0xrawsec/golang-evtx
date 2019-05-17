@@ -66,8 +66,8 @@ type File struct {
 	monitorExisting bool
 }
 
-// New EvtxFile structure initialized from file
-// @filepath : filepath of the evtx file to parse
+// New EvtxFile structure initialized from an open buffer
+// @r : buffer containing evtx data to parse
 // return File : File structure initialized
 func New(r io.ReadSeeker) (ef File, err error) {
 	ef.file = r
@@ -76,7 +76,9 @@ func New(r io.ReadSeeker) (ef File, err error) {
 	return
 }
 
-// Open alias to New to be complient with the Go way of programming
+// New EvtxFile structure initialized from file
+// @filepath : filepath of the evtx file to parse
+// return File : File structure initialized
 func Open(filepath string) (ef File, err error) {
 	file, err := os.Open(filepath)
 	if err != nil {
