@@ -426,9 +426,13 @@ func (uts *UnicodeTextString) Parse(reader io.ReadSeeker) error {
 	if err != nil {
 		return err
 	}
-	uts.String = make(UTF16String, uts.Size)
-	err = encoding.UnmarshaInitSlice(reader, &uts.String, Endianness)
-	//log.Debugf("len:%d value:%s", uts.Size, string(uts.String.ToASCII()))
+
+	if uts.Size > 0 {
+		uts.String = make(UTF16String, uts.Size)
+		err = encoding.UnmarshaInitSlice(reader, &uts.String, Endianness)
+		//log.Debugf("len:%d value:%s", uts.Size, string(uts.String.ToASCII()))
+	}
+
 	return err
 }
 
