@@ -345,7 +345,7 @@ func main() {
 		}
 		if !carve {
 			// Regular EVTX file
-			ef, err := evtx.New(evtxFile)
+			ef, err := evtx.Open(evtxFile)
 			if err != nil {
 				log.Error(err)
 				continue
