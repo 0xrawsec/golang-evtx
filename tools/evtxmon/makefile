@@ -1,6 +1,6 @@
-RELEASE="release"
 MAIN_BASEN_SRC=evtxmon
-VERSION=v1.1
+RELEASE="$(GOPATH)/release/$(MAIN_BASEN_SRC)"
+VERSION=v1.2.1
 # Strips symbols and dwarf to make binary smaller
 OPTS=-ldflags "-s -w"
 ifdef DEBUG
