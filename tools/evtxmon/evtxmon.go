@@ -226,7 +226,7 @@ func main() {
 		os.Exit(1)
 	} else {
 		stop := make(chan bool, 1)
-		ef, err := evtx.New(evtxfile)
+		ef, err := evtx.Open(evtxfile)
 		if err != nil {
 			log.LogErrorAndExit(err)
 		}

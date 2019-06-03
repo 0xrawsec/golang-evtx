@@ -62,26 +62,30 @@ type FileHeader struct {
 type File struct {
 	sync.Mutex      // We need it if we want to parse (read) chunks in several threads
 	Header          FileHeader
-	file            *os.File
+	file            io.ReadSeeker
 	monitorExisting bool
+}
+
+// New EvtxFile structure initialized from an open buffer
+// @r : buffer containing evtx data to parse
+// return File : File structure initialized
+func New(r io.ReadSeeker) (ef File, err error) {
+	ef.file = r
+	ef.ParseFileHeader()
+
+	return
 }
 
 // New EvtxFile structure initialized from file
 // @filepath : filepath of the evtx file to parse
 // return File : File structure initialized
-func New(filepath string) (ef File, err error) {
+func Open(filepath string) (ef File, err error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return
 	}
-	ef.file = file
-	ef.ParseFileHeader()
-	return
-}
 
-// Open alias to New to be complient with the Go way of programming
-func Open(filepath string) (ef File, err error) {
-	return New(filepath)
+	return New(file)
 }
 
 // SetMonitorExisting sets monitorExisting flag of EvtxFile struct in order to
@@ -95,6 +99,7 @@ func (ef *File) SetMonitorExisting(value bool) {
 func (ef *File) ParseFileHeader() {
 	ef.Lock()
 	defer ef.Unlock()
+
 	GoToSeeker(ef.file, 0)
 	err := encoding.Unmarshal(ef.file, &ef.Header, Endianness)
 	if err != nil {
@@ -429,5 +434,9 @@ func (ef *File) MonitorEvents(stop chan bool, sleep ...time.Duration) (cgem chan
 
 // Close file
 func (ef *File) Close() error {
-	return ef.file.Close()
+	if f, ok := ef.file.(io.Closer); ok {
+		return f.Close()
+	}
+
+	return nil
 }
