@@ -138,19 +138,21 @@ type FileTime struct {
 	Nanoseconds int64
 }
 
-func (v *FileTime) Convert() float64 {
-	return float64(v.Nanoseconds)/10000000.0 - 11644473600.0
+func (v *FileTime) Convert() (sec int64, nsec int64) {
+	nano := int64(10000000)
+	milli := int64(10000)
+	sec = int64(float64(v.Nanoseconds-11644473600*nano) / float64(nano))
+	nsec = (v.Nanoseconds - 11644473600*nano) - sec*milli
+	return
 }
 
-/*func (s *FileTime) Time() time.Time {
-	return time.Unix(int64(s.Convert()), 0)
-}*/
-
 func (s *FileTime) Time() UTCTime {
-	return UTCTime(time.Unix(int64(s.Convert()), 0))
+	sec, nsec := s.Convert()
+	return UTCTime(time.Unix(sec, nsec))
 }
 
 func (s *FileTime) String() string {
 	//"2015-12-10T17:56:53.515800800Z"
-	return time.Unix(int64(s.Convert()), 0).Format(time.RFC3339)
+	sec, nsec := s.Convert()
+	return time.Unix(sec, nsec).Format(time.RFC3339Nano)
 }

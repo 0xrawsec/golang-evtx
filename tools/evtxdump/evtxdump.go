@@ -219,7 +219,7 @@ func printEvent(e *evtx.GoEvtxMap) {
 
 		if timestamp {
 			if err == nil {
-				fmt.Printf("%d: %s\n", t.Unix(), string(evtx.ToJSON(e)))
+				fmt.Printf("%d: %s\n", t.UnixNano(), string(evtx.ToJSON(e)))
 			} else {
 				log.Errorf("Event time not found: %s", string(evtx.ToJSON(e)))
 			}
