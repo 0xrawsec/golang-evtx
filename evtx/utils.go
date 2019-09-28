@@ -140,9 +140,9 @@ type FileTime struct {
 
 func (v *FileTime) Convert() (sec int64, nsec int64) {
 	nano := int64(10000000)
-	milli := int64(10000)
-	sec = int64(float64(v.Nanoseconds-11644473600*nano) / float64(nano))
-	nsec = (v.Nanoseconds - 11644473600*nano) - sec*milli
+	//milli := int64(10000)
+	sec = int64(float64(v.Nanoseconds)/float64(nano) - 11644473600.0)
+	nsec = ((v.Nanoseconds - 11644473600*nano) - sec*nano) * 100
 	return
 }
 
