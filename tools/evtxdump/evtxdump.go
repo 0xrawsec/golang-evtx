@@ -43,7 +43,6 @@ const (
 	ExitSuccess = 0
 	// ExitFail RC
 	ExitFail  = 1
-	Version   = "Evtxdump 1.1"
 	Copyright = "Evtxdump Copyright (C) 2017 RawSec SARL (@0xrawsec)"
 	License   = `License GPLv3: This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain
@@ -57,6 +56,7 @@ var (
 	version       bool
 	unordered     bool
 	statflag      bool
+	header        bool
 	offset        int64
 	limit         int
 	tag           string
@@ -235,6 +235,7 @@ func printEvent(e *evtx.GoEvtxMap) {
 func main() {
 	var memprofile, cpuprofile string
 	flag.BoolVar(&debug, "d", debug, "Enable debug mode")
+	flag.BoolVar(&header, "H", header, "Display file header and quit")
 	flag.BoolVar(&carve, "c", carve, "Carve events from file")
 	flag.BoolVar(&version, "V", version, "Show version and exit")
 	flag.BoolVar(&timestamp, "t", timestamp, "Prints event timestamp (as int) at the beginning of line to make sorting easier")
@@ -270,7 +271,7 @@ func main() {
 
 	// version
 	if version {
-		fmt.Fprintf(os.Stderr, "%s\n%s\n%s\n", Version, Copyright, License)
+		fmt.Fprintf(os.Stderr, "%s (commit: %s)\n%s\n%s\n", Version, CommitID, Copyright, License)
 		return
 	}
 
@@ -338,18 +339,24 @@ func main() {
 	}
 
 	for _, evtxFile := range flag.Args() {
-		switch {
-		case carve:
-		default:
-
-		}
 		if !carve {
-			// Regular EVTX file
-			ef, err := evtx.Open(evtxFile)
+			// Regular EVTX file, we use OpenDirty because
+			// the file might be in a dirty state
+			ef, err := evtx.OpenDirty(evtxFile)
+
+			// exceptionnaly we do some intermediary code
+			// before error checking
+			if header {
+				fmt.Printf("\nFile Header: %s\n\n", evtxFile)
+				fmt.Println(ef.Header)
+				continue
+			}
+
 			if err != nil {
 				log.Error(err)
 				continue
 			}
+
 			for e := range ef.FastEvents() {
 				if statflag {
 					// We update the stats

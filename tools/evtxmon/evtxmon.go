@@ -42,7 +42,6 @@ const (
 	ExitSuccess = 0
 	// ExitFailure RC
 	ExitFailure = 1
-	Version     = "Evtxmon 1.1"
 	Copyright   = "Evtxmon Copyright (C) 2017 RawSec SARL (@0xrawsec)"
 	License     = `License GPLv3: This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain
@@ -204,7 +203,7 @@ func main() {
 
 	// version
 	if version {
-		fmt.Fprintf(os.Stderr, "%s\n%s\n%s\n", Version, Copyright, License)
+		fmt.Fprintf(os.Stderr, "%s (commit: %s)\n%s\n%s\n", Version, CommitID, Copyright, License)
 		return
 	}
 
@@ -227,7 +226,7 @@ func main() {
 	} else {
 		stop := make(chan bool, 1)
 		ef, err := evtx.Open(evtxfile)
-		if err != nil {
+		if err != nil && err != evtx.ErrDirtyFile {
 			log.LogErrorAndExit(err)
 		}
 
