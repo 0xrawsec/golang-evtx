@@ -1,6 +1,6 @@
 MAIN_BASEN_SRC=evtxdump
 RELEASE="$(GOPATH)/release/$(MAIN_BASEN_SRC)"
-VERSION=v1.2.2
+VERSION=v1.2.4
 COMMITID=$(shell git rev-parse HEAD)
 # Strips symbols and dwarf to make binary smaller
 OPTS=-ldflags "-s -w"
