@@ -373,7 +373,11 @@ func (ef *File) Events() (cgem chan *GoEvtxMap) {
 	go func() {
 		defer close(cgem)
 		for c := range ef.Chunks() {
-			for e := range c.Events() {
+			cpc, err := ef.FetchChunk(c.Offset)
+			if err != nil {
+				panic(err)
+			}
+			for e := range cpc.Events() {
 				cgem <- e
 			}
 		}
