@@ -78,8 +78,8 @@ func DebugReader(reader io.ReadSeeker, before, after int64) {
 }
 
 func UpdateLastElements(e Element) {
-	copy(lastParsedElements[:], lastParsedElements[1:])
-	lastParsedElements[len(lastParsedElements)-1] = e
+	// copy(lastParsedElements[:], lastParsedElements[1:])
+	// lastParsedElements[len(lastParsedElements)-1] = e
 }
 
 func BackupSeeker(seeker io.Seeker) int64 {
