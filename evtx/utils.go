@@ -78,6 +78,10 @@ func DebugReader(reader io.ReadSeeker, before, after int64) {
 }
 
 func UpdateLastElements(e Element) {
+	// There is a data race triggered there by the race
+	// detector however it is an acceptable race since it
+	// is a function used for debugging purposes.
+	// issue: https://github.com/0xrawsec/golang-evtx/issues/25
 	copy(lastParsedElements[:], lastParsedElements[1:])
 	lastParsedElements[len(lastParsedElements)-1] = e
 }
