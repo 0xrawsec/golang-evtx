@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xrawsec/golang-utils/datastructs"
+
 	"github.com/0xrawsec/golang-evtx/evtx"
 	"github.com/0xrawsec/golang-utils/log"
 )
@@ -145,20 +147,25 @@ loop:
 }
 
 func TestParseAllEvents(t *testing.T) {
-	maxChunks := 1000
-	chunkCount := 0
-	ef, _ := evtx.Open(forwardedEvtxFile)
-	log.Info(ef.Header)
-	for c := range ef.Chunks() {
-		//log.Info(c.Header)
-		if chunkCount >= maxChunks && maxChunks >= 0 {
-			break
-		}
-		for e := range c.Events() {
-			t.Log(string(evtx.ToJSON(e)))
-		}
-		chunkCount++
+	eventCnt := 0
+	recordIds := datastructs.NewSyncedSet()
+	ef, err := evtx.OpenDirty(sysmonFile)
+	if err != nil {
+		t.Logf("Failed at opening EVTX file: %s", err)
+		t.Fail()
 	}
+	log.Info(ef.Header)
+	for e := range ef.Events() {
+		if recordIds.Contains(e.EventRecordID()) {
+			t.Log("Event already processed")
+			t.Fail()
+		}
+		//t.Log(string(evtx.ToJSON(e)))
+		recordIds.Add(e.EventRecordID())
+		eventCnt++
+
+	}
+	t.Logf("%d events parsed", eventCnt)
 }
 
 func TestParseChunk(t *testing.T) {
