@@ -6,11 +6,17 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf16"
 
 	"github.com/0xrawsec/golang-utils/log"
 )
+
+type LastParsedElements struct {
+	sync.RWMutex
+	elements [4]Element
+}
 
 ///////////////////////////// Utility Functions ////////////////////////////////
 
@@ -57,7 +63,7 @@ func DebugReader(reader io.ReadSeeker, before, after int64) {
 	var out string
 	out += fmt.Sprintf("Relative offset: 0x%08x\n", cur)
 	out += "Last parsed elements : "
-	for _, e := range lastParsedElements {
+	for _, e := range lastParsedElements.elements {
 		out += fmt.Sprintf("%T, ", e)
 	}
 	out += "\n"
@@ -78,8 +84,11 @@ func DebugReader(reader io.ReadSeeker, before, after int64) {
 }
 
 func UpdateLastElements(e Element) {
-	// copy(lastParsedElements[:], lastParsedElements[1:])
-	// lastParsedElements[len(lastParsedElements)-1] = e
+	lastParsedElements.Lock()
+	defer lastParsedElements.Unlock()
+	n := len(lastParsedElements.elements)
+	copy(lastParsedElements.elements[:], lastParsedElements.elements[1:])
+	lastParsedElements.elements[n-1] = e
 }
 
 func BackupSeeker(seeker io.Seeker) int64 {
