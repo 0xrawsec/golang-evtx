@@ -73,7 +73,7 @@ const (
 var (
 	Endianness = binary.LittleEndian
 	// Used for debug purposes
-	lastParsedElements [4]Element
+	lastParsedElements = &LastParsedElements{elements: [4]Element{}}
 )
 
 //////////////////////////////// BinXMLTokens //////////////////////////////////
