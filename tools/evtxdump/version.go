@@ -1,6 +1,6 @@
 package main
 
 const(
-    Version="v1.2.2"
-    CommitID="15c19702b350c29c2468b529dbe946fa98c5ac56"
+    Version="v1.2.4"
+    CommitID="fb1efdb926d27bb62f9b82f532fdd6a66fa14741"
 )

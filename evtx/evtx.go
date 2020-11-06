@@ -239,8 +239,6 @@ func (ef *File) FetchChunk(offset int64) (Chunk, error) {
 
 // Chunks returns a chan of all the Chunks found in the current file
 // return (chan Chunk)
-// TODO: need to be improved: the chunk do not need to be loaded into memory there
-// we just need the header to sort them out. If we do so, do not need undordered chunks
 func (ef *File) Chunks() (cc chan Chunk) {
 	ss := datastructs.NewSortedSlice(0, int(ef.Header.ChunkCount))
 	cc = make(chan Chunk)
@@ -373,10 +371,17 @@ func (ef *File) Events() (cgem chan *GoEvtxMap) {
 	go func() {
 		defer close(cgem)
 		for c := range ef.Chunks() {
-			for e := range c.Events() {
-				cgem <- e
+			cpc, err := ef.FetchChunk(c.Offset)
+			switch {
+			case err != nil && err != io.EOF:
+				panic(err)
+			case err == nil:
+				for ev := range cpc.Events() {
+					cgem <- ev
+				}
 			}
 		}
+
 	}()
 	return
 }
@@ -392,10 +397,6 @@ func (ef *File) FastEvents() (cgem chan *GoEvtxMap) {
 		go func() {
 			defer close(chanQueue)
 			for pc := range ef.Chunks() {
-				// We have to create a copy here because otherwise cpc.EventsChan() fails
-				// I guess that because EventsChan takes a pointer to an object and that
-				// and thus the chan is taken on the pointer and since the object pointed
-				// changes -> kaboom
 				cpc, err := ef.FetchChunk(pc.Offset)
 				switch {
 				case err != nil && err != io.EOF:
