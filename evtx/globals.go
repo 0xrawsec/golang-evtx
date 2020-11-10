@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,8 @@ var (
 
 //////////////////////// Global Variables and their setters /////////////////////
 var (
+	// Debug mode for parser
+	Debug = false
 	// ModeCarving flag to identify we run in carving mode
 	ModeCarving = false
 	// DefaultMonitorSleep default sleep time between two file update checks when
@@ -43,8 +46,14 @@ func SetMonitorSleep(d time.Duration) {
 	DefaultMonitorSleep = d
 }
 
+// SetMaxJobs sets the number of jobs for parsing
 func SetMaxJobs(jobs int) {
 	MaxJobs = jobs
+}
+
+// SetDebug set variable enabling debugging at parser level
+func SetDebug(value bool) {
+	Debug = value
 }
 
 ////////////////////////// EVTX Constants and globs ////////////////////////////
@@ -70,10 +79,16 @@ const (
 	MaxSliceSize = ChunkSize
 )
 
+//type LastParsedElements
+
 var (
 	Endianness = binary.LittleEndian
 	// Used for debug purposes
-	lastParsedElements [4]Element
+	//lastParsedElements LastParsedElements
+	lastParsedElements struct {
+		sync.RWMutex
+		elements [4]Element
+	}
 )
 
 //////////////////////////////// BinXMLTokens //////////////////////////////////

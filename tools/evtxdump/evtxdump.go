@@ -267,6 +267,7 @@ func main() {
 	// Debug mode
 	if debug {
 		log.InitLogger(log.LDebug)
+		evtx.SetDebug(true)
 	}
 
 	// version

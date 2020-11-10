@@ -14,20 +14,23 @@ func checkParsingError(err error, reader io.ReadSeeker, e Element) {
 	UpdateLastElements(e)
 	if err != nil {
 		log.DontPanicf("%s: parsing %T", err, e)
-		DebugReader(reader, 10, 5)
+		if Debug {
+			DebugReader(reader, 10, 5)
+		}
 	}
 }
 
 func checkFullParsingError(err error, reader io.ReadSeeker, e Element, c *Chunk) {
 	UpdateLastElements(e)
 	if err != nil {
-		//log.DontPanicf("%s: parsing %T (chunk @ 0x%08x reader @ 0x%08x)", err, e, c.Offset, BackupSeeker(reader))
 		if c != nil {
 			log.DebugDontPanicf("%s: parsing %T (chunk @ 0x%08x reader @ 0x%08x)", err, e, c.Offset, BackupSeeker(reader))
 		} else {
 			log.DebugDontPanicf("%s: parsing %T (chunk @ NIL reader @ 0x%08x)", err, e, BackupSeeker(reader))
 		}
-		DebugReader(reader, 10, 5)
+		if Debug {
+			DebugReader(reader, 10, 5)
+		}
 	}
 }
 

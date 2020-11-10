@@ -57,9 +57,11 @@ func DebugReader(reader io.ReadSeeker, before, after int64) {
 	var out string
 	out += fmt.Sprintf("Relative offset: 0x%08x\n", cur)
 	out += "Last parsed elements : "
-	for _, e := range lastParsedElements {
+	lastParsedElements.RLock()
+	for _, e := range lastParsedElements.elements {
 		out += fmt.Sprintf("%T, ", e)
 	}
+	lastParsedElements.RUnlock()
 	out += "\n"
 	for i, c := range b {
 		if int64(i) == before {
@@ -82,8 +84,12 @@ func UpdateLastElements(e Element) {
 	// detector however it is an acceptable race since it
 	// is a function used for debugging purposes.
 	// issue: https://github.com/0xrawsec/golang-evtx/issues/25
-	copy(lastParsedElements[:], lastParsedElements[1:])
-	lastParsedElements[len(lastParsedElements)-1] = e
+	if Debug {
+		lastParsedElements.Lock()
+		defer lastParsedElements.Unlock()
+		copy(lastParsedElements.elements[:], lastParsedElements.elements[1:])
+		lastParsedElements.elements[len(lastParsedElements.elements)-1] = e
+	}
 }
 
 func BackupSeeker(seeker io.Seeker) int64 {
