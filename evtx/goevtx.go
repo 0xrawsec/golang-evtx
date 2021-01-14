@@ -191,7 +191,7 @@ func (pg *GoEvtxMap) GetInt(path *GoEvtxPath) (int64, error) {
 	if err != nil {
 		return 0, &ErrEvtxEltNotFound{*path}
 	}
-	i, err := strconv.ParseInt(s, 10, 64)
+	i, err := strconv.ParseInt(s, 0, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -214,7 +214,7 @@ func (pg *GoEvtxMap) GetUint(path *GoEvtxPath) (uint64, error) {
 	if err != nil {
 		return 0, &ErrEvtxEltNotFound{*path}
 	}
-	u, err := strconv.ParseUint(s, 10, 64)
+	u, err := strconv.ParseUint(s, 0, 64)
 	if err != nil {
 		return 0, err
 	}
