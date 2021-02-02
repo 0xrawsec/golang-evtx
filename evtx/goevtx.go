@@ -404,6 +404,11 @@ func (pg *GoEvtxMap) Del(path *GoEvtxPath) {
 				p := ge.(GoEvtxMap)
 				np := (*path)[1:]
 				p.Del(&np)
+
+			case map[string]interface{}:
+				p := GoEvtxMap(ge.(map[string]interface{}))
+				np := (*path)[1:]
+				p.Del(&np)
 			}
 		}
 	}
