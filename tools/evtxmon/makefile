@@ -19,7 +19,7 @@ init: buildversion
 	mkdir -p $(RELEASE)/windows
 	mkdir -p $(RELEASE)/darwin
 
-compile:linux windows darwin
+compile: windows
 	
 install:
 	go install ./

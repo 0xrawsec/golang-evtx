@@ -22,6 +22,7 @@ package main
 
 import (
 	"compress/gzip"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -35,6 +36,7 @@ import (
 	"github.com/0xrawsec/golang-utils/args"
 	"github.com/0xrawsec/golang-utils/datastructs"
 	"github.com/0xrawsec/golang-utils/log"
+	"github.com/0xrawsec/golang-win32/win32/wevtapi"
 )
 
 const (
@@ -159,6 +161,19 @@ func (s *Stats) Summary() {
 	}
 }
 
+func XMLEventToGoEvtxMap(xe *wevtapi.XMLEvent) (*evtx.GoEvtxMap, error) {
+	ge := make(evtx.GoEvtxMap)
+	bytes, err := json.Marshal(xe.ToJSONEvent())
+	if err != nil {
+		return &ge, err
+	}
+	err = json.Unmarshal(bytes, &ge)
+	if err != nil {
+		return &ge, err
+	}
+	return &ge, nil
+}
+
 func main() {
 	var err error
 	var ofile *os.File
@@ -256,6 +271,15 @@ func main() {
 		if monitorExisting {
 			ef.SetMonitorExisting(true)
 		}
+		/*xmlEvents := h.eventProvider.FetchEvents(channels, wevtapi.EvtSubscribeToFutureEvents)
+		for xe := range xmlEvents {
+			event, err := XMLEventToGoEvtxMap(xe)
+			if err != nil {
+				log.Errorf("Failed to convert event: %s", err)
+				log.Debugf("Error data: %v", xe)
+			}
+		}*/
+
 		for e := range ef.MonitorEvents(stop) {
 			if output != "" {
 				writer.Write(evtx.ToJSON(e))

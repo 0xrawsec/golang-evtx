@@ -393,16 +393,17 @@ func (pg *GoEvtxMap) Set(path *GoEvtxPath, new GoEvtxElement) error {
 }
 
 // Del deletes the object referenced by path
-func (pg *GoEvtxMap) Del(path ...string) {
-	if len(path) > 0 {
-		if ge, ok := (*pg)[path[0]]; ok {
-			if len(path) == 1 {
-				delete((*pg), path[0])
+func (pg *GoEvtxMap) Del(path *GoEvtxPath) {
+	if len(*path) > 0 {
+		if ge, ok := (*pg)[(*path)[0]]; ok {
+			if len(*path) == 1 {
+				delete((*pg), (*path)[0])
 			}
 			switch ge.(type) {
 			case GoEvtxMap:
 				p := ge.(GoEvtxMap)
-				p.Del(path[1:]...)
+				np := (*path)[1:]
+				p.Del(&np)
 			}
 		}
 	}
@@ -411,5 +412,5 @@ func (pg *GoEvtxMap) Del(path ...string) {
 // DelXmlns : utility function to delete useless xlmns entry found in every
 // GoEvtxMap
 func (pg *GoEvtxMap) DelXmlns() {
-	pg.Del(XmlnsPath...)
+	pg.Del(&XmlnsPath)
 }

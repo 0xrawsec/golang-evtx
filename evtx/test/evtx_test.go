@@ -303,6 +303,34 @@ func TestBetweenFilter(t *testing.T) {
 	t.Logf("%d events between %v and %v", i, t1, t2)
 }
 
+func TestDelete(t *testing.T) {
+	utctimePath := evtx.Path("/Event/EventData/UtcTime")
+	ef, _ := evtx.Open(sysmonFile)
+	for e := range ef.FastEvents() {
+		e.Del(&utctimePath)
+		if _, err := e.GetString(&utctimePath); err == nil {
+			t.Errorf("Failed to delete field")
+			t.FailNow()
+		}
+	}
+}
+
+func TestAddDelete(t *testing.T) {
+	geneInfoPath := evtx.Path("/Event/GeneInfo")
+	genInfo := map[string]interface{}{
+		"Signature":   []string{"test", "blop"},
+		"Criticality": 10}
+	ef, _ := evtx.Open(sysmonFile)
+	for e := range ef.FastEvents() {
+		e.Set(&geneInfoPath, genInfo)
+		e.Del(&geneInfoPath)
+		if _, err := e.Get(&geneInfoPath); err == nil {
+			t.Errorf("Failed to delete field")
+			t.FailNow()
+		}
+	}
+}
+
 func TestAllFiles(t *testing.T) {
 	files, err := ioutil.ReadDir(testfilesDir)
 	if err != nil {
@@ -334,5 +362,4 @@ func TestUserID(t *testing.T) {
 			}
 		}
 	}
-
 }
