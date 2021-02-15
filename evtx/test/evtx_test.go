@@ -49,16 +49,16 @@ func TestParseAt(t *testing.T) {
 	elt, _ := evtx.Parse(reader, &c, false)
 	switch elt.(type) {
 	case *evtx.Fragment:
-		m, _ := elt.(*evtx.Fragment).GoEvtxMap()
-		// if err != nil {
-		// 	panic(err)
-		// }
+		m, err := elt.(*evtx.Fragment).GoEvtxMap()
+		if err != nil {
+			panic(err)
+		}
 		t.Log(string(evtx.ToJSON(m)))
 	case *evtx.TemplateInstance:
-		m, _ := elt.(*evtx.TemplateInstance).GoEvtxMap()
-		// if err != nil {
-		// 	panic(err)
-		// }
+		m, err := elt.(*evtx.TemplateInstance).GoEvtxMap()
+		if err != nil {
+			panic(err)
+		}
 		t.Log(string(evtx.ToJSON(m)))
 	default:
 		t.Log(elt)
