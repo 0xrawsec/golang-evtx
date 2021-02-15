@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/rs/zerolog/log"
+	"github.com/0xrawsec/golang-utils/log"
 )
 
 ///////////////////////////////// Event ////////////////////////////////////////

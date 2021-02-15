@@ -49,9 +49,17 @@ func TestParseAt(t *testing.T) {
 	elt, _ := evtx.Parse(reader, &c, false)
 	switch elt.(type) {
 	case *evtx.Fragment:
-		t.Log(string(evtx.ToJSON(elt.(*evtx.Fragment).GoEvtxMap())))
+		m, _ := elt.(*evtx.Fragment).GoEvtxMap()
+		// if err != nil {
+		// 	panic(err)
+		// }
+		t.Log(string(evtx.ToJSON(m)))
 	case *evtx.TemplateInstance:
-		t.Log(string(evtx.ToJSON(elt.(*evtx.TemplateInstance).GoEvtxMap())))
+		m, _ := elt.(*evtx.TemplateInstance).GoEvtxMap()
+		// if err != nil {
+		// 	panic(err)
+		// }
+		t.Log(string(evtx.ToJSON(m)))
 	default:
 		t.Log(elt)
 
@@ -88,7 +96,7 @@ func TestNodeTree(t *testing.T) {
 	}
 	t.Log(l)
 	// Debug
-	gem := temp.GoEvtxMap()
+	gem, err := temp.GoEvtxMap()
 	t.Log(string(evtx.ToJSON(gem)))
 	if err != nil {
 		t.Error(err)
