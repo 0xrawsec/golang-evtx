@@ -504,11 +504,11 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) (GoEvtxElement, error) 
 	case *Fragment:
 		temp := elt.(*Fragment).BinXMLElement.(*TemplateInstance)
 		root := temp.Root()
-		return temp.NodeToGoEvtx(&root), nil
+		return temp.NodeToGoEvtx(&root)
 	case *TemplateInstance:
 		temp := elt.(*TemplateInstance)
 		root := temp.Root()
-		return temp.NodeToGoEvtx(&root), nil
+		return temp.NodeToGoEvtx(&root)
 	case Value:
 		if _, ok := elt.(Value).(*ValueNull); ok {
 			// We return nil if is ValueNull
@@ -520,7 +520,7 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) (GoEvtxElement, error) 
 		if ers == "" {
 			err := fmt.Errorf("Unknown entity reference: %s", ers)
 			if !ModeCarving {
-				panic(err)
+				return nil, err
 			} else {
 				log.LogError(err)
 				return nil, nil
@@ -531,7 +531,7 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) (GoEvtxElement, error) 
 	default:
 		err := fmt.Errorf("Don't know how to handle: %T", elt)
 		if !ModeCarving {
-			panic(err)
+			return nil, err
 		} else {
 			log.LogError(err)
 			return nil, nil
@@ -539,17 +539,24 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) (GoEvtxElement, error) 
 	}
 }
 
-func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
+func (ti *TemplateInstance) NodeToGoEvtx(n *Node) (GoEvtxMap, error) {
 	switch {
 	case n.Start == nil && len(n.Child) == 1:
 		m := make(GoEvtxMap)
-		m[n.Child[0].Start.Name.String()] = ti.NodeToGoEvtx(n.Child[0])
-		return m
+		elem, err := ti.NodeToGoEvtx(n.Child[0])
+		if err != nil {
+			return GoEvtxMap{}, err
+		}
+		m[n.Child[0].Start.Name.String()] = elem
+		return m, nil
 
 	default:
 		m := make(GoEvtxMap, len(n.Child))
 		for i, c := range n.Child {
-			node := ti.NodeToGoEvtx(c)
+			node, err := ti.NodeToGoEvtx(c)
+			if err != nil {
+				return GoEvtxMap{}, err
+			}
 			switch {
 			// It seems that on EVTX files forwarded to WECs we have sometime just a
 			// Name attribute without value. We notice that this happened to Element
@@ -595,8 +602,7 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 		for _, e := range n.Element {
 			ge, err := ti.ElementToGoEvtx(e)
 			if err != nil {
-
-				continue
+				return GoEvtxMap{}, err
 			}
 
 			switch ge.(type) {
@@ -614,7 +620,7 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 			default:
 				v, err := ti.ElementToGoEvtx(n.Element[0])
 				if err != nil {
-					continue
+					return GoEvtxMap{}, err
 				}
 				m["Value"] = v
 			}
@@ -624,7 +630,7 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 			for _, attr := range n.Start.AttributeList.Attributes {
 				gee, err := ti.ElementToGoEvtx(attr.AttributeData)
 				if err != nil {
-					continue
+					return GoEvtxMap{}, err
 				}
 				// We have a ValueNull
 				if gee != nil {
@@ -632,14 +638,17 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 				}
 			}
 		}
-		return m
+		return m, nil
 	}
 }
 
-func (ti *TemplateInstance) GoEvtxMap() *GoEvtxMap {
+func (ti *TemplateInstance) GoEvtxMap() (*GoEvtxMap, error) {
 	root := ti.Root()
-	gem := ti.NodeToGoEvtx(&root)
-	return &gem
+	gem, err := ti.NodeToGoEvtx(&root)
+	if err != nil {
+		return nil, err
+	}
+	return &gem, nil
 }
 
 // TemplateInstance : BinXmlTemplateInstance
