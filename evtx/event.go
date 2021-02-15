@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/0xrawsec/golang-utils/log"
+	"github.com/rs/zerolog/log"
 )
 
 ///////////////////////////////// Event ////////////////////////////////////////
@@ -64,8 +64,8 @@ func (e Event) GoEvtxMap(c *Chunk) (pge *GoEvtxMap, err error) {
 	// Bug here if we put c
 	element, err := Parse(reader, c, false)
 	if err != nil && err != io.EOF {
-		//panic(err)
 		log.Error(err)
+		return nil, err
 	}
 	// If not a BinXMLFragment a panic will be raised
 	fragment, ok := element.(*Fragment)
@@ -76,7 +76,7 @@ func (e Event) GoEvtxMap(c *Chunk) (pge *GoEvtxMap, err error) {
 		// Way to raise panic
 		_ = element.(*Fragment)
 	}
-	return fragment.GoEvtxMap(), err
+	return fragment.GoEvtxMap()
 }
 
 func (e Event) String() string {

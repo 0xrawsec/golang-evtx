@@ -98,14 +98,17 @@ type Fragment struct {
 	BinXMLElement Element
 }
 
-func (f *Fragment) GoEvtxMap() *GoEvtxMap {
+func (f *Fragment) GoEvtxMap() (*GoEvtxMap, error) {
 	switch f.BinXMLElement.(type) {
 	case *TemplateInstance:
-		pgem := f.BinXMLElement.(*TemplateInstance).GoEvtxMap()
+		pgem, err := f.BinXMLElement.(*TemplateInstance).GoEvtxMap()
+		if err != nil {
+			return nil, err
+		}
 		//pgem.SetEventRecordID(fmt.Sprintf("%d", f.EventID))
 		//pgem.SetSystemTime(f.Timestamp)
 		pgem.DelXmlns()
-		return pgem
+		return pgem, nil
 		/*case *ElementStart:
 		elements := make([]Element, 0)
 		elements = append(elements, f.BinXMLElement.(*ElementStart))
@@ -113,7 +116,7 @@ func (f *Fragment) GoEvtxMap() *GoEvtxMap {
 
 		}*/
 	}
-	return nil
+	return nil, nil
 }
 
 func (f *Fragment) Parse(reader io.ReadSeeker) error {
