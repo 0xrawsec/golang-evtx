@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/0xrawsec/golang-evtx/output"
 	"io"
 	"io/ioutil"
 	"path/filepath"

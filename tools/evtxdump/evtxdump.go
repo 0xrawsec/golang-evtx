@@ -66,6 +66,8 @@ var (
 	brURL         string
 	cID           string
 	topic         string
+	esUrl         string
+	esIndex       string
 	start, stop   args.DateVar
 	chunkHeaderRE = regexp.MustCompile(evtx.ChunkMagic)
 	defaultTime   = time.Time{}
@@ -257,6 +259,9 @@ func main() {
 	flag.StringVar(&cID, "cID", "", "Kafka client ID")
 	flag.StringVar(&tag, "tag", "", "special tag for matching purpose on remote collector")
 
+	flag.StringVar(&esIndex, "esIndex", "", "elastic index")
+	flag.StringVar(&esUrl, "esUrl", "", "the URL endpoints of the Elasticsearch nodes")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s: %[1]s [OPTIONS] FILES...\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
@@ -337,6 +342,15 @@ func main() {
 			log.Errorf("Can't init Kafka conn", err)
 		}
 		out = kafkaOut
+	case "elastic":
+		ElasticOut := &output.Elastic{
+			EsUrl:     esUrl,
+			IndexName: esIndex,
+		}
+		if err := ElasticOut.Open(""); err != nil {
+			log.Errorf("Can't init elastic conn", err)
+		}
+		out = ElasticOut
 	}
 
 	for _, evtxFile := range flag.Args() {
