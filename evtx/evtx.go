@@ -333,7 +333,7 @@ func (ef *File) monitorChunks(stop chan bool, sleep time.Duration) (cc chan Chun
 			}
 
 			// Cleanup the useless cache entries (consider putting in go routine if worth)
-			markedChunks = datastructs.NewSyncedSet(markedChunks.Intersect(&curChunks))
+			markedChunks = datastructs.NewSyncedSet(markedChunks.Intersect(curChunks))
 
 			// We flag out of first loop
 			firstLoopFlag = false

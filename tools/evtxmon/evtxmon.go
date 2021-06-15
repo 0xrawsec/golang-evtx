@@ -98,7 +98,7 @@ type Stats struct {
 	Start         time.Time
 	Stop          time.Time
 	TimeLastEvent time.Time
-	Filters       datastructs.SyncedSet
+	Filters       *datastructs.SyncedSet
 	EventCount    uint
 	EventIDStats  map[int64]uint
 	EventIDs      Int64Slice
