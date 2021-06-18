@@ -1,6 +1,7 @@
 package evtx
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -97,14 +98,17 @@ type Fragment struct {
 	BinXMLElement Element
 }
 
-func (f *Fragment) GoEvtxMap() *GoEvtxMap {
+func (f *Fragment) GoEvtxMap() (*GoEvtxMap, error) {
 	switch f.BinXMLElement.(type) {
 	case *TemplateInstance:
-		pgem := f.BinXMLElement.(*TemplateInstance).GoEvtxMap()
+		pgem, err := f.BinXMLElement.(*TemplateInstance).GoEvtxMap()
+		if err != nil {
+			return nil, err
+		}
 		//pgem.SetEventRecordID(fmt.Sprintf("%d", f.EventID))
 		//pgem.SetSystemTime(f.Timestamp)
 		pgem.DelXmlns()
-		return pgem
+		return pgem, nil
 		/*case *ElementStart:
 		elements := make([]Element, 0)
 		elements = append(elements, f.BinXMLElement.(*ElementStart))
@@ -112,7 +116,7 @@ func (f *Fragment) GoEvtxMap() *GoEvtxMap {
 
 		}*/
 	}
-	return nil
+	return nil, nil
 }
 
 func (f *Fragment) Parse(reader io.ReadSeeker) error {
@@ -473,11 +477,11 @@ func (ti *TemplateInstance) Root() Node {
 	return node
 }
 
-func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
+func (ti *TemplateInstance) ElementToGoEvtx(elt Element) (GoEvtxElement, error) {
 	switch elt.(type) {
 	// BinXML specific
 	case *ValueText:
-		return elt.(*ValueText).String()
+		return elt.(*ValueText).String(), nil
 	case *OptionalSubstitution:
 		s := elt.(*OptionalSubstitution)
 		// Manage Carving mode
@@ -485,9 +489,9 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
 		case int(s.SubID) < len(ti.Data.Values):
 			return ti.ElementToGoEvtx(ti.Data.Values[int(s.SubID)])
 		case !ModeCarving:
-			panic("Index out of range")
+			return nil, errors.New("Index out of range")
 		default:
-			return nil
+			return nil, nil
 		}
 	case *NormalSubstitution:
 		s := elt.(*NormalSubstitution)
@@ -496,9 +500,9 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
 		case int(s.SubID) < len(ti.Data.Values):
 			return ti.ElementToGoEvtx(ti.Data.Values[int(s.SubID)])
 		case !ModeCarving:
-			panic("Index out of range")
+			return nil, errors.New("Index out of range")
 		default:
-			return nil
+			return nil, nil
 		}
 	case *Fragment:
 		temp := elt.(*Fragment).BinXMLElement.(*TemplateInstance)
@@ -511,44 +515,51 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
 	case Value:
 		if _, ok := elt.(Value).(*ValueNull); ok {
 			// We return nil if is ValueNull
-			return nil
+			return nil, nil
 		}
-		return elt.(Value).Repr()
+		return elt.(Value).Repr(), nil
 	case *BinXMLEntityReference:
 		ers := elt.(*BinXMLEntityReference).String()
 		if ers == "" {
 			err := fmt.Errorf("Unknown entity reference: %s", ers)
 			if !ModeCarving {
-				panic(err)
+				return nil, err
 			} else {
 				log.LogError(err)
-				return nil
+				return nil, nil
 			}
 		}
-		return ers
+		return ers, nil
 
 	default:
 		err := fmt.Errorf("Don't know how to handle: %T", elt)
 		if !ModeCarving {
-			panic(err)
+			return nil, err
 		} else {
 			log.LogError(err)
-			return nil
+			return nil, nil
 		}
 	}
 }
 
-func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
+func (ti *TemplateInstance) NodeToGoEvtx(n *Node) (GoEvtxMap, error) {
 	switch {
 	case n.Start == nil && len(n.Child) == 1:
 		m := make(GoEvtxMap)
-		m[n.Child[0].Start.Name.String()] = ti.NodeToGoEvtx(n.Child[0])
-		return m
+		elem, err := ti.NodeToGoEvtx(n.Child[0])
+		if err != nil {
+			return GoEvtxMap{}, err
+		}
+		m[n.Child[0].Start.Name.String()] = elem
+		return m, nil
 
 	default:
 		m := make(GoEvtxMap, len(n.Child))
 		for i, c := range n.Child {
-			node := ti.NodeToGoEvtx(c)
+			node, err := ti.NodeToGoEvtx(c)
+			if err != nil {
+				return GoEvtxMap{}, err
+			}
 			switch {
 			// It seems that on EVTX files forwarded to WECs we have sometime just a
 			// Name attribute without value. We notice that this happened to Element
@@ -592,7 +603,11 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 
 		// It is assumed that all the Elements have a string representation
 		for _, e := range n.Element {
-			ge := ti.ElementToGoEvtx(e)
+			ge, err := ti.ElementToGoEvtx(e)
+			if err != nil {
+				return GoEvtxMap{}, err
+			}
+
 			switch ge.(type) {
 			case GoEvtxMap:
 				other := ge.(GoEvtxMap)
@@ -606,27 +621,37 @@ func (ti *TemplateInstance) NodeToGoEvtx(n *Node) GoEvtxMap {
 					}
 				}
 			default:
-				m["Value"] = ti.ElementToGoEvtx(n.Element[0])
+				v, err := ti.ElementToGoEvtx(n.Element[0])
+				if err != nil {
+					return GoEvtxMap{}, err
+				}
+				m["Value"] = v
 			}
 		}
 		// n.Start can be NULL in  carving mode
 		if n.Start != nil {
 			for _, attr := range n.Start.AttributeList.Attributes {
-				gee := ti.ElementToGoEvtx(attr.AttributeData)
+				gee, err := ti.ElementToGoEvtx(attr.AttributeData)
+				if err != nil {
+					return GoEvtxMap{}, err
+				}
 				// We have a ValueNull
 				if gee != nil {
 					m[attr.Name.String()] = gee
 				}
 			}
 		}
-		return m
+		return m, nil
 	}
 }
 
-func (ti *TemplateInstance) GoEvtxMap() *GoEvtxMap {
+func (ti *TemplateInstance) GoEvtxMap() (*GoEvtxMap, error) {
 	root := ti.Root()
-	gem := ti.NodeToGoEvtx(&root)
-	return &gem
+	gem, err := ti.NodeToGoEvtx(&root)
+	if err != nil {
+		return nil, err
+	}
+	return &gem, nil
 }
 
 // TemplateInstance : BinXmlTemplateInstance

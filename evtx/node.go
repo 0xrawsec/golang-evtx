@@ -34,11 +34,11 @@ func NodeTree(es []Element, index int) (Node, int) {
 }
 
 // TODO: Not used
-func ElementToGoEvtx(elt Element) GoEvtxElement {
+func ElementToGoEvtx(elt Element) (GoEvtxElement, error) {
 	switch elt.(type) {
 	// BinXML specific
 	case *ValueText:
-		return elt.(*ValueText).String()
+		return elt.(*ValueText).String(), nil
 	/*case *OptionalSubstitution:
 		s := elt.(*OptionalSubstitution)
 		return ElementToGoEvtx(ti.Data.Values[int(s.SubID)])
@@ -55,8 +55,8 @@ func ElementToGoEvtx(elt Element) GoEvtxElement {
 		root := temp.Root()
 		return temp.NodeToGoEvtx(&root)
 	case Value:
-		return elt.(Value).Repr()
+		return elt.(Value).Repr(), nil
 	default:
-		panic(fmt.Errorf("Don't know how to handle: %T", elt))
+		return nil, fmt.Errorf("Don't know how to handle: %T", elt)
 	}
 }
