@@ -521,7 +521,7 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
 			if !ModeCarving {
 				panic(err)
 			} else {
-				log.LogError(err)
+				log.Error(err)
 				return nil
 			}
 		}
@@ -532,7 +532,7 @@ func (ti *TemplateInstance) ElementToGoEvtx(elt Element) GoEvtxElement {
 		if !ModeCarving {
 			panic(err)
 		} else {
-			log.LogError(err)
+			log.Error(err)
 			return nil
 		}
 	}

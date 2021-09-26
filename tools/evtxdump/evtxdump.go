@@ -82,10 +82,10 @@ type stats struct {
 }
 
 // stats contstructor
-func newStats() stats {
+func newStats() *stats {
 	s := stats{}
 	s.ChannelStats = make(map[string]eventIDStat)
-	return s
+	return &s
 }
 
 // update stats in a stat sturcture
@@ -162,13 +162,13 @@ func carveFile(datafile string, offset int64, limit int) {
 	chunkCnt := 0
 	f, err := os.Open(datafile)
 	if err != nil {
-		log.LogErrorAndExit(err)
+		log.Abort(ExitFail, err)
 	}
 	defer f.Close()
 	f.Seek(offset, os.SEEK_SET)
 	dup, err := os.Open(datafile)
 	if err != nil {
-		log.LogErrorAndExit(err)
+		log.Abort(ExitFail, err)
 	}
 	defer dup.Close()
 	dup.Seek(offset, os.SEEK_SET)
@@ -177,7 +177,7 @@ func carveFile(datafile string, offset int64, limit int) {
 		log.Infof("Parsing Chunk @ Offset: %d (0x%08[1]x)", offset)
 		chunk, err := fetchChunkFromReader(dup, offset)
 		if err != nil {
-			log.LogError(err)
+			log.Error(err)
 		}
 		for e := range chunk.Events() {
 			printEvent(e)
@@ -281,7 +281,7 @@ func main() {
 		defer func() {
 			f, err := os.Create(memprofile)
 			if err != nil {
-				log.LogErrorAndExit(err)
+				log.Abort(ExitFail, err)
 			}
 			pprof.WriteHeapProfile(f)
 			f.Close()
@@ -291,11 +291,11 @@ func main() {
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)
 		if err != nil {
-			log.LogErrorAndExit(err)
+			log.Abort(ExitFail, err)
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			log.LogErrorAndExit(err)
+			log.Abort(ExitFail, err)
 		}
 		defer func() {
 			pprof.StopCPUProfile()

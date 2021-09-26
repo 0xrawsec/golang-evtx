@@ -242,7 +242,7 @@ func main() {
 		stop := make(chan bool, 1)
 		ef, err := evtx.Open(evtxfile)
 		if err != nil && err != evtx.ErrDirtyFile {
-			log.LogErrorAndExit(err)
+			log.Abort(ExitFailure, err)
 		}
 
 		if statsFlag {

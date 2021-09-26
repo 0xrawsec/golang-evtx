@@ -284,7 +284,7 @@ func ParseValueReader(vd ValueDescriptor, reader io.ReadSeeker) (Element, error)
 		elt, err = Parse(reader, nil, true)
 		if err != nil {
 			//panic(err)
-			log.LogError(err)
+			log.Error(err)
 			log.DebugDontPanic(err)
 		}
 		return elt, err

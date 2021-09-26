@@ -116,8 +116,8 @@ func (c *Chunk) ParseChunkHeader(reader io.ReadSeeker) {
 }
 
 // Less implement datastructs.Sortable
-func (c Chunk) Less(s *datastructs.Sortable) bool {
-	other := (*s).(Chunk)
+func (c Chunk) Less(s datastructs.Sortable) bool {
+	other := s.(Chunk)
 	return c.Header.NumFirstRecLog < other.Header.NumFirstRecLog
 }
 
@@ -258,7 +258,7 @@ func (c *Chunk) Events() (cgem chan *GoEvtxMap) {
 func (c Chunk) String() string {
 	templateOffsets := make([]int32, len(c.TemplateTable))
 	i := 0
-	for to, _ := range c.TemplateTable {
+	for to := range c.TemplateTable {
 		templateOffsets[i] = to
 		i++
 	}
