@@ -258,6 +258,7 @@ func main() {
 	flag.StringVar(&tag, "tag", "", "special tag for matching purpose on remote collector")
 
 	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "%s (commit: %s)\n%s\n%s\n\n", Version, CommitID, Copyright, License)
 		fmt.Fprintf(os.Stderr, "Usage of %s: %[1]s [OPTIONS] FILES...\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}

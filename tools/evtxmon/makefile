@@ -3,7 +3,7 @@ RELEASE="$(GOPATH)/release/$(MAIN_BASEN_SRC)"
 VERSION=v1.2.4
 COMMITID=$(shell git rev-parse HEAD)
 # Strips symbols and dwarf to make binary smaller
-OPTS=-ldflags "-s -w"
+OPTS=-trimpath -ldflags "-s -w"
 ifdef DEBUG
 	OPTS=
 endif
